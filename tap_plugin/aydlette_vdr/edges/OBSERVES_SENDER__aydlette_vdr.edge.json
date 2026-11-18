@@ -1,0 +1,14 @@
+{
+  "slug": "OBSERVES_SENDER__aydlette_vdr",
+  "name": "Observes Sender",
+  "description": "An observed flow leaves this component. Any node.",
+  "sources": [
+    "aydlette_vdr__observation"
+  ],
+  "identity": {
+    "discriminators": []
+  },
+  "default_dimensions": {
+    "fedramp.rule": "vdr"
+  }
+}

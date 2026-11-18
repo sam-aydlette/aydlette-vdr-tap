@@ -1,0 +1,44 @@
+{
+ "metadata": {
+  "grift_version": "0"
+ },
+ "_reserved": {},
+ "batches": [
+  {
+   "batch_entity": {
+    "entity_id": "69ea7c5b-2c1c-5bb8-8d49-8f57305ae596",
+    "entity_type": "batch",
+    "name": "Aydlette VDR Profiles v0.1.0",
+    "dimensions": {}
+   },
+   "batch_node": {
+    "source": "plugins.aydlette_vdr.grift.profiles",
+    "name": "Aydlette VDR Profiles v0.1.0",
+    "description": "Seeds one governed profile, aydlette-starter: the method's global defaults with a starter theta. A provider copies it under its own profile_id and governs it; the batch imports once, and a profile edited afterwards is not overwritten."
+   },
+   "nodes": [
+    {
+     "entity": {
+      "entity_id": "ab526944-5dbd-5a57-bcd8-3ac35982ce1f",
+      "entity_type": "aydlette_vdr__profile",
+      "name": "Profile aydlette-starter 0.1.0",
+      "dimensions": {
+       "fedramp.rule": "vdr"
+      }
+     },
+     "node": {
+      "profile_id": "aydlette-starter",
+      "version": "0.1.0",
+      "description": "The method's global defaults (decision-table combining function, needs map, effect and scale tables, severity fallback to technical impact, no SSVC overlay) with a starter theta. Copy it under your own profile_id and govern your own theta.",
+      "document": {
+       "theta": 0.1,
+       "theta_rationale": "STARTER VALUE, REPLACE IT. The method sets no default for theta (REQ-LEV-2): each provider governs and publishes its own, with its rationale. 0.10 is the value the paper's scenario boxes use and the one FIRST notes is commonly cited; it is here so the profile runs, not because it fits your remediation capacity.",
+       "likely_overdue_margin_hours": 120
+      }
+     }
+    }
+   ],
+   "edges": []
+  }
+ ]
+}

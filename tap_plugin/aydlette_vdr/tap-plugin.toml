@@ -1,0 +1,46 @@
+manifest_version = "0"
+plugin_version = "0.1.0"
+requires_tap = ">=0.3.1"
+slug = "aydlette_vdr"
+name = "Aydlette VDR"
+description = "The vulnerability-evidence method for FedRAMP VDR (samaydlette.com/research/vulnerability-evidence.html): declared exposure and classification reconciled with observations (Figure 6), Figure 7 LEV, a three-layer PAIN with governed profiles, dispositions with review dates, the clock and gates G1-G5 and G7."
+
+depends_on = [
+    { slug = "fedramp_20x_vdr", note = "import dependency: timeframe rows (deadline_hours, acceptance_hours), the PAIN levels and reach_rows for package findings. Vocabulary dependency: the vdr_evaluations collector writes vdr_evaluation nodes of scheme aydlette and their EVALUATES_COMPLIANCE_FINDING and CITES_FACTOR_EVIDENCE edges." },
+    { slug = "compliance_core", note = "import dependency: findings, vulnerability records (CVSS, KEV, EPSS, SSVC) and CARRIES_COMPLIANCE_FINDING." },
+]
+
+[fips]
+status = "compatible"
+
+[models]
+aydlette_vdr__declaration = "tap_plugin.aydlette_vdr.models.declaration.ComponentDeclaration"
+aydlette_vdr__disposition = "tap_plugin.aydlette_vdr.models.disposition.Disposition"
+aydlette_vdr__finding_facts = "tap_plugin.aydlette_vdr.models.finding_facts.FindingFacts"
+aydlette_vdr__profile = "tap_plugin.aydlette_vdr.models.profile.Profile"
+aydlette_vdr__check_vector = "tap_plugin.aydlette_vdr.models.profile.CheckVector"
+aydlette_vdr__observation = "tap_plugin.aydlette_vdr.models.observation.Observation"
+aydlette_vdr__declared_flow = "tap_plugin.aydlette_vdr.models.observation.DeclaredFlow"
+
+[edges]
+DECLARES_COMPONENT__aydlette_vdr = "edges/DECLARES_COMPONENT__aydlette_vdr.edge.json"
+DESCRIBES_FINDING__aydlette_vdr = "edges/DESCRIBES_FINDING__aydlette_vdr.edge.json"
+DISPOSES_FINDING__aydlette_vdr = "edges/DISPOSES_FINDING__aydlette_vdr.edge.json"
+OBSERVES_COMPONENT__aydlette_vdr = "edges/OBSERVES_COMPONENT__aydlette_vdr.edge.json"
+OBSERVES_SENDER__aydlette_vdr = "edges/OBSERVES_SENDER__aydlette_vdr.edge.json"
+FLOW_SOURCE__aydlette_vdr = "edges/FLOW_SOURCE__aydlette_vdr.edge.json"
+FLOW_TARGET__aydlette_vdr = "edges/FLOW_TARGET__aydlette_vdr.edge.json"
+
+[grift]
+profiles = "grift/profiles.grift.json"
+searches = "grift/searches.grift.json"
+
+[searches]
+aydlette-pain = "tap_plugin.aydlette_vdr.searches.pain.aydlette_pain"
+aydlette-summary = "tap_plugin.aydlette_vdr.searches.pain.aydlette_summary"
+aydlette-reconcile = "tap_plugin.aydlette_vdr.searches.pain.aydlette_reconcile"
+
+[[boot.records]]
+name = "ci"
+description = "RESERVED NAME (req-boot-bootstrap-ci-record): the stack this plugin's own tests run in: depends_on closure + self, offline, credential-free."
+sha256 = "934ebad5648118d7128f48b0aa2eaa8521e35969bb55b4a002c3a54d010b8a78"

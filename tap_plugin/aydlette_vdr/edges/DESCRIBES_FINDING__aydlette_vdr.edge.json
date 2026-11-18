@@ -1,0 +1,17 @@
+{
+  "slug": "DESCRIBES_FINDING__aydlette_vdr",
+  "name": "Describes Finding",
+  "description": "Finding facts describe one finding: scanner severity and access data, SSVC values with their source, fix state and first evaluation.",
+  "sources": [
+    "aydlette_vdr__finding_facts"
+  ],
+  "targets": [
+    "compliance_core__compliance_finding"
+  ],
+  "identity": {
+    "discriminators": []
+  },
+  "default_dimensions": {
+    "fedramp.rule": "vdr"
+  }
+}

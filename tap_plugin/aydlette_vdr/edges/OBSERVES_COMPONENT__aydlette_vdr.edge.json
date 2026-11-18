@@ -1,0 +1,14 @@
+{
+  "slug": "OBSERVES_COMPONENT__aydlette_vdr",
+  "name": "Observes Component",
+  "description": "An observation is about this component: the path from the internet reaches it, or the observed flow arrives at it. Any node.",
+  "sources": [
+    "aydlette_vdr__observation"
+  ],
+  "identity": {
+    "discriminators": []
+  },
+  "default_dimensions": {
+    "fedramp.rule": "vdr"
+  }
+}

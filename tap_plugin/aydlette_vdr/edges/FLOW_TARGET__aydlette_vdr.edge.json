@@ -1,0 +1,14 @@
+{
+  "slug": "FLOW_TARGET__aydlette_vdr",
+  "name": "Flow Target",
+  "description": "A declared flow arrives at this component. Any node.",
+  "sources": [
+    "aydlette_vdr__declared_flow"
+  ],
+  "identity": {
+    "discriminators": []
+  },
+  "default_dimensions": {
+    "fedramp.rule": "vdr"
+  }
+}

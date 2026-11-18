@@ -1,0 +1,14 @@
+{
+  "slug": "DECLARES_COMPONENT__aydlette_vdr",
+  "name": "Declares Component",
+  "description": "A declaration states a component's exposure intent and classification. The target is any node, because a component is whatever the inventory calls one (a program, a host, a bucket, a CDN distribution).",
+  "sources": [
+    "aydlette_vdr__declaration"
+  ],
+  "identity": {
+    "discriminators": []
+  },
+  "default_dimensions": {
+    "fedramp.rule": "vdr"
+  }
+}

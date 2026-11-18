@@ -1,0 +1,14 @@
+{
+  "slug": "FLOW_SOURCE__aydlette_vdr",
+  "name": "Flow Source",
+  "description": "A declared flow leaves this component. Any node.",
+  "sources": [
+    "aydlette_vdr__declared_flow"
+  ],
+  "identity": {
+    "discriminators": []
+  },
+  "default_dimensions": {
+    "fedramp.rule": "vdr"
+  }
+}

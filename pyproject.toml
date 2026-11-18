@@ -1,0 +1,29 @@
+# Identity chain: slug = "aydlette_vdr" · distribution = "aydlette-vdr-tap" · import namespace = "tap_plugin.aydlette_vdr"
+[project]
+name = "aydlette-vdr-tap"
+description = "TAP plugin: the vulnerability-evidence method for FedRAMP VDR (samaydlette.com/research/vulnerability-evidence.html)."
+requires-python = ">=3.14"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE", "LICENSES/*"]
+authors = [{ name = "Sam Aydlette" }]
+dynamic = ["version"]
+dependencies = ["fedramp-20x-vdr-tap", "compliance-core-tap"]
+
+[project.entry-points."tap.plugins"]
+aydlette_vdr = "tap_plugin.aydlette_vdr.apps:AydletteVdrConfig"
+
+[dependency-groups]
+dev = ["pytest>=8.3", "pytest-django>=4.9"]
+
+[build-system]
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.version.raw-options]
+fallback_version = "0.0.0"
+
+[tool.hatch.build.targets.wheel]
+only-include = ["tap_plugin/aydlette_vdr"]

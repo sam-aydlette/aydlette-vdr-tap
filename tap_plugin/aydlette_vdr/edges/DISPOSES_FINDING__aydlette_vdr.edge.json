@@ -1,0 +1,17 @@
+{
+  "slug": "DISPOSES_FINDING__aydlette_vdr",
+  "name": "Disposes Finding",
+  "description": "A disposition record covers a finding. One record may cover many findings (one advisory across components, REQ-LEV-4).",
+  "sources": [
+    "aydlette_vdr__disposition"
+  ],
+  "targets": [
+    "compliance_core__compliance_finding"
+  ],
+  "identity": {
+    "discriminators": []
+  },
+  "default_dimensions": {
+    "fedramp.rule": "vdr"
+  }
+}

@@ -1,0 +1,13 @@
+Copyright 2026 Sam Aydlette
+
+This software implements the method described in "Vulnerability Evidence as a Product" by Sam Aydlette
+(https://samaydlette.com/research/vulnerability-evidence.html).
+
+Licensing:
+  * Source code (everything under tap_plugin/, and the build files) is licensed under the Apache License, Version 2.0.
+    See LICENSE.
+  * Documentation (README.md and anything under docs/), including the method's tables restated there, is licensed under
+    the Creative Commons Attribution 4.0 International License (CC BY 4.0). See LICENSES/CC-BY-4.0.txt.
+
+Attribution, when you reuse or adapt this work: credit "Sam Aydlette, Vulnerability Evidence as a Product
+(samaydlette.com/research/vulnerability-evidence.html)", link the license, and say whether you changed it.
