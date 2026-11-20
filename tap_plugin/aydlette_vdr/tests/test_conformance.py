@@ -65,21 +65,25 @@ def disp(kind, **kw):
 
 
 # ---------------------------------------------------------------------------------------------------- reachability, G4/G5
+@pytest.mark.spec("req-aydlette-vdr-reconcile-1")
 def test_t1_declared_internal_with_observed_path_fails_g4_and_is_irv():
     e = ev(F(), [D("internal", undeclared_exposure=True)])
     assert e.gates["G4"] and e.irv
 
 
+@pytest.mark.spec("req-aydlette-vdr-reconcile-4")
 def test_t4_public_backed_is_irv_and_no_gate_fails():
     e = ev(F(cvss_vector=LOCAL_AVAIL, prediction=0.0), [D("public-backed")])
     assert e.irv and not e.gates["G5"] and not e.gates["G4"]
 
 
+@pytest.mark.spec("req-aydlette-vdr-declarations-1")
 def test_t6_no_exposure_intent_fails_g5():
     e = ev(F(), [D(None)])
     assert e.gates["G5"] and e.irv
 
 
+@pytest.mark.spec("req-aydlette-vdr-irv-1", "req-aydlette-vdr-irv-2")
 def test_t7_t38_unresolved_is_irv_fail_safe_and_queued():
     e = ev(F(cvss_vector=AVAIL), [])
     assert e.irv and not e.resolved
@@ -87,37 +91,45 @@ def test_t7_t38_unresolved_is_irv_fail_safe_and_queued():
     assert [q["kind"] for q in e.queue] == ["unresolved"]
 
 
+@pytest.mark.spec("req-aydlette-vdr-sources-1")
 def test_t32_non_machine_finding_is_nirv():
     assert not ev(F(non_machine=True), [D()]).irv
 
 
+@pytest.mark.spec("req-aydlette-vdr-irv-3")
 def test_t40_narrowing_makes_a_public_finding_nirv():
     assert not ev(F(), [D()], [disp("narrowing")]).irv
 
 
+@pytest.mark.spec("req-aydlette-vdr-irv-5")
 def test_deflection_counts_only_when_tested():
     assert ev(F(), [D()], [disp("deflection")]).irv
     assert not ev(F(), [D()], [disp("deflection", tested=True)]).irv
 
 
+@pytest.mark.spec("req-aydlette-vdr-declarations-2")
 def test_t43_exposure_intent_without_data_class_fails_g5():
     e = ev(F(), [D(data=())])
     assert e.gates["G5"] and e.needs_basis.startswith("fail-safe data")
 
 
+@pytest.mark.spec("req-aydlette-vdr-declarations-3")
 def test_t44_no_agency_scope_is_multi_agency():
     assert ev(F(), [D(agency_scope=None)]).agency_scope == "multi"
 
 
+@pytest.mark.spec("req-aydlette-vdr-declarations-4")
 def test_t54_missing_classifier_is_published_as_not_recorded():
     e = ev(F(), [D(data=("cui",))])
     assert e.declared_by["classified_by"] == "not recorded" and e.needs["c"] == "high"
 
 
+@pytest.mark.spec("req-aydlette-vdr-declarations-5")
 def test_t63_public_backed_is_irv():
     assert ev(F(), [D("public-backed")]).irv
 
 
+@pytest.mark.spec("req-aydlette-vdr-declarations-6")
 def test_merge_takes_most_exposed_and_most_sensitive():
     a = Declaration("a", exposure_intent="internal", data=("public",), agency_scope="single")
     b = Declaration("b", exposure_intent="public-edge", data=("pii",), mission_critical=True, agency_scope="single")
@@ -126,21 +138,25 @@ def test_merge_takes_most_exposed_and_most_sensitive():
 
 
 # ------------------------------------------------------------------------------------------------------------------ LEV
+@pytest.mark.spec("req-aydlette-vdr-lev-1")
 def test_t8_floor_beats_a_low_prediction():
     e = ev(F(cvss_vector=NET, prediction=0.01), [D()])
     assert e.lev and e.lev_basis.startswith("floor")
 
 
+@pytest.mark.spec("req-aydlette-vdr-lev-2")
 def test_t9_nirv_no_score_medium_severity_is_lev():
     e = ev(F(scanner_severity="MEDIUM"), [D("internal")])
     assert e.lev and e.lev_basis.startswith("no prediction")
 
 
+@pytest.mark.spec("req-aydlette-vdr-lev-3")
 def test_prediction_below_theta_off_the_floor_is_nlev():
     e = ev(F(cvss_vector=LOCAL_AVAIL, prediction=0.05), [D()])
     assert not e.lev and e.column == "nlev"
 
 
+@pytest.mark.spec("req-aydlette-vdr-lev-5")
 def test_t28_override_lapses_at_review_by():
     f = F(cvss_vector=LOCAL_AVAIL)
     assert not ev(f, [D()], [disp("lev_override")]).lev
@@ -148,11 +164,13 @@ def test_t28_override_lapses_at_review_by():
     assert lapsed.lev and any(q["kind"] == "disposition-lapsed" for q in lapsed.queue)
 
 
+@pytest.mark.spec("req-aydlette-vdr-lev-6")
 def test_override_never_clears_kev_or_the_floor():
     assert ev(F(kev=True), [D()], [disp("lev_override")]).lev
     assert ev(F(cvss_vector=NET), [D()], [disp("lev_override")]).lev
 
 
+@pytest.mark.spec("req-aydlette-vdr-lev-4")
 def test_unknown_access_on_a_reachable_finding_is_lev():
     assert ev(F(prediction=0.0), [D()]).lev_basis.startswith("floor: access unknown")
 
@@ -160,6 +178,7 @@ def test_unknown_access_on_a_reachable_finding_is_lev():
 OVERLAY = {"ssvc_overlay": {"automatable_floor": True, "poc_check": True}}
 
 
+@pytest.mark.spec("req-aydlette-vdr-lev-10")
 def test_t55_overlay_automatable_irv_no_privileges_is_lev():
     v = "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H"  # user interaction: off Figure 7's floor
     e = ev(
@@ -168,6 +187,7 @@ def test_t55_overlay_automatable_irv_no_privileges_is_lev():
     assert e.lev
 
 
+@pytest.mark.spec("req-aydlette-vdr-lev-11")
 def test_t56_overlay_not_automatable_is_nlev():
     e = ev(
         F(cvss_vector=NET, ssvc_automatable="no", ssvc_exploitation="none", prediction=0.01),
@@ -177,23 +197,36 @@ def test_t56_overlay_not_automatable_is_nlev():
     assert not e.lev
 
 
+@pytest.mark.spec("req-aydlette-vdr-lev-12")
 def test_t57_overlay_poc_automatable_is_lev_even_nirv():
     e = ev(F(cvss_vector=LOCAL_AVAIL, ssvc_automatable="yes", ssvc_exploitation="poc", prediction=0.01), [D("internal")],
            profile=P(**OVERLAY))  # fmt: skip
     assert e.lev and "proof of concept" in e.lev_basis
 
 
+@pytest.mark.spec("req-aydlette-vdr-lev-14")
+def test_t59_overlay_pentest_finding_needing_a_login_with_a_poc_is_lev():
+    """A penetration test finding has no vector: the tester records its access (network, a login, no user interaction),
+    a proof of concept and Automatable. The floor does not apply (it needs privileges); the proof-of-concept check does."""
+    f = F(access=(True, True, False), ssvc_exploitation="poc", ssvc_automatable="yes", prediction=0.01)
+    e = ev(f, [D("public-edge")], profile=P(**OVERLAY))
+    assert e.lev and "proof of concept" in e.lev_basis
+
+
+@pytest.mark.spec("req-aydlette-vdr-lev-13")
 def test_t58_overlay_no_recorded_exploitation_skips_the_poc_check():
     e = ev(F(cvss_vector=LOCAL_AVAIL, ssvc_automatable="yes", prediction=0.01), [D("internal")], profile=P(**OVERLAY))
     assert not e.lev
 
 
+@pytest.mark.spec("req-aydlette-vdr-governance-2")
 def test_t68_half_an_overlay_fails_the_build():
     with pytest.raises(prof.ProfileError):
         P(ssvc_overlay={"automatable_floor": True, "poc_check": False})
 
 
 # --------------------------------------------------------------------------------------------------------------- impact
+@pytest.mark.spec("req-aydlette-vdr-pain-9")
 def test_scenario_http2_flood_docs_site_n1_filing_api_n4():
     docs = Declaration("docs", exposure_intent="public-edge", data=("public",), agency_scope="multi")
     api = Declaration("api", exposure_intent="public-edge", data=("cui",), mission_critical=True, agency_scope="multi")
@@ -201,37 +234,44 @@ def test_scenario_http2_flood_docs_site_n1_filing_api_n4():
     assert ev(F(cvss_vector=AVAIL), [api]).pain == "N4"
 
 
+@pytest.mark.spec("req-aydlette-vdr-pain-2")
 def test_t48_availability_only_on_cui_not_mission_critical_is_medium_need():
     e = ev(F(cvss_vector=AVAIL), [D(data=("cui",))])
     assert e.pain_values["need_met"] == "medium"
 
 
+@pytest.mark.spec("req-aydlette-vdr-pain-3")
 def test_t61_availability_partial_high_need_multi_is_n4():
     e = ev(F(cvss_vector=AVAIL), [D(data=("internal",), mission_critical=True, agency_scope="multi")])
     assert e.technical_impact == "partial" and e.pain == "N4"
 
 
+@pytest.mark.spec("req-aydlette-vdr-pain-4")
 def test_t62_c_and_i_high_is_total():
     assert ev(F(cvss_vector=NET), [D()]).technical_impact == "total"
 
 
+@pytest.mark.spec("req-aydlette-vdr-pain-5")
 def test_no_vector_no_severity_is_total():
     e = ev(F(), [D()])
     assert e.technical_impact == "total" and e.pain_values["need_met"] == "medium"
 
 
+@pytest.mark.spec("req-aydlette-vdr-pain-6")
 def test_severity_fallback_goes_through_the_classification_so_the_fail_safe_holds():
     """The fallback sets technical impact, not the rating: an unresolved config finding stays at the fail-safe."""
     e = ev(F(scanner_severity="MEDIUM"), [])
     assert e.technical_impact == "partial" and e.pain == "N4"  # High need, partial: disruptive, multi-agency
 
 
+@pytest.mark.spec("req-aydlette-vdr-pain-6")
 def test_a_fallback_straight_to_the_scale_is_refused():
     """It would skip the classification and the fail-safe (REQ-PAI-6, -7)."""
     with pytest.raises(prof.ProfileError):
         P(severity_fallback={"mode": "scale", "map": {"medium": "N2"}})
 
 
+@pytest.mark.spec("req-aydlette-vdr-pain-8")
 def test_cvss_environmental_combining_is_selectable():
     env = {"impact_weights": {"none": 0, "low": 0.22, "high": 0.56},
            "requirement_weights": {"low": 0.5, "medium": 1.0, "high": 1.5},
@@ -244,16 +284,19 @@ def test_cvss_environmental_combining_is_selectable():
 
 
 # ------------------------------------------------------------------------------------------------- dispositions, clock
+@pytest.mark.spec("req-aydlette-vdr-dispositions-3", "req-aydlette-vdr-pain-1")
 def test_t15_t23_fully_mitigated_is_n0_never_a_false_positive():
     e = ev(F(cvss_vector=NET), [D()], [disp("fully_mitigated", control_id="flag:feature-x")])
     assert e.pain == "N0" and not e.lev and e.group == "fully_mitigated" and e.due_at is None
 
 
+@pytest.mark.spec("req-aydlette-vdr-dispositions-4")
 def test_mitigation_without_a_control_is_not_in_force():
     e = ev(F(cvss_vector=NET), [D()], [disp("fully_mitigated")])
     assert e.pain != "N0" and e.dispositions[0]["state"].startswith("a mitigation names no control")
 
 
+@pytest.mark.spec("req-aydlette-vdr-dispositions-1")
 def test_t12_t13_vendor_dependency_lapses_when_fixable_or_unknown():
     old = F(cvss_vector=NET, first_detected_at=NOW - timedelta(days=30))
     for state in ("available", None):
@@ -265,11 +308,13 @@ def test_t12_t13_vendor_dependency_lapses_when_fixable_or_unknown():
     assert held.dispositions[0]["in_force"] and not held.gates["G3"]
 
 
+@pytest.mark.spec("req-aydlette-vdr-dispositions-2")
 def test_t16_past_review_by_is_absent_and_queued():
     e = ev(F(), [D()], [disp("risk_accepted", review_by=TODAY - timedelta(days=1))])
     assert not e.dispositions[0]["in_force"] and e.queue[0]["kind"] == "disposition-lapsed"
 
 
+@pytest.mark.spec("req-aydlette-vdr-dispositions-5")
 def test_t69_t70_vex_false_positive_needs_the_deployed_version_and_a_live_statement():
     f = F(deployed_version="2.2")
     assert ev(f, [D()], [disp("false_positive", vex_version="2.1")]).group == "open"
@@ -277,21 +322,25 @@ def test_t69_t70_vex_false_positive_needs_the_deployed_version_and_a_live_statem
     assert ev(f, [D()], [disp("false_positive", vex_version="2.2")]).group == "false_positive"
 
 
+@pytest.mark.spec("req-aydlette-vdr-gates-1")
 def test_t10_kev_past_catalog_due_date_fails_g1_even_when_protected():
     f = F(kev=True, kev_due_date=TODAY - timedelta(days=1))
     assert ev(f, [D()], [disp("mitigated", control_id="waf-1", pain_after="N2")]).gates["G1"]
 
 
+@pytest.mark.spec("req-aydlette-vdr-gates-3")
 def test_t11_past_timeframe_without_disposition_fails_g3():
     e = ev(F(cvss_vector=NET, first_detected_at=NOW - timedelta(days=5)), [D()])  # N4 lev_irv is 96 h
     assert e.pain == "N4" and e.state == "overdue" and e.gates["G3"]
 
 
+@pytest.mark.spec("req-aydlette-vdr-clock-1")
 def test_t14_past_max_overdue_is_reported_accepted():
     e = ev(F(first_detected_at=NOW - timedelta(days=200)), [D()])
     assert e.state.startswith("accepted")
 
 
+@pytest.mark.spec("req-aydlette-vdr-clock-2")
 def test_t34_verified_mitigation_starts_a_new_clock_first_evaluation_unchanged():
     start = NOW - timedelta(days=10)
     e = ev(F(cvss_vector=NET, first_evaluated_at=start), [D()],
@@ -303,24 +352,28 @@ def test_t34_verified_mitigation_starts_a_new_clock_first_evaluation_unchanged()
     )
 
 
+@pytest.mark.spec("req-aydlette-vdr-clock-3")
 def test_t35_evaluation_change_without_mitigation_keeps_the_clock_start():
     start = NOW - timedelta(days=10)
     e = ev(F(cvss_vector=LOCAL_AVAIL, prediction=0.0, first_evaluated_at=start), [D()])
     assert e.clock_start == start and e.column == "nlev"
 
 
+@pytest.mark.spec("req-aydlette-vdr-clock-5")
 def test_kev_due_date_caps_the_deadline():
     f = F(cvss_vector=LOCAL_AVAIL, kev=True, kev_due_date=TODAY + timedelta(days=1), first_detected_at=NOW)
     e = ev(f, [D("internal")])
     assert e.due_at.date() == TODAY + timedelta(days=1)
 
 
+@pytest.mark.spec("req-aydlette-vdr-gates-2")
 def test_g2_top_rated_reachable_likely_exploitable_without_disposition():
     e = ev(F(cvss_vector=NET), [D(data=("pii",), mission_critical=True, agency_scope="multi")])
     assert e.pain == "N5" and e.gates["G2"]
 
 
 # ----------------------------------------------------------------------------------------------------- governed profile
+@pytest.mark.spec("req-aydlette-vdr-governance-1")
 def test_t18_missing_or_invalid_profile_fails():
     with pytest.raises(prof.ProfileError):
         prof.validate(None, LEVELS)
@@ -330,11 +383,13 @@ def test_t18_missing_or_invalid_profile_fails():
         prof.validate({**BASE, "theta_rationale": ""}, LEVELS)
 
 
+@pytest.mark.spec("req-aydlette-vdr-rules-1")
 def test_t19_a_new_rules_level_fails_until_the_mapping_covers_it():
     with pytest.raises(prof.ProfileError, match="N6"):
         prof.validate(BASE, (*LEVELS, "N6"))
 
 
+@pytest.mark.spec("req-aydlette-vdr-pain-7")
 def test_the_global_defaults_have_no_deviations():
     assert prof.deviations(P()) == []
     assert prof.deviations(
@@ -342,10 +397,12 @@ def test_the_global_defaults_have_no_deviations():
     ) == ["needs.public.i"]
 
 
+@pytest.mark.spec("req-aydlette-vdr-governance-3")
 def test_profile_digest_is_stable():
     assert prof.digest({"b": 1, "a": 2}) == prof.digest({"a": 2, "b": 1})
 
 
+@pytest.mark.spec("req-aydlette-vdr-lev-7")
 def test_prediction_feed_is_recorded_or_not_recorded():
     e = ev(F(prediction=0.2, prediction_date=date(2026, 11, 18)), [D()])
     assert e.prediction["feed_date"] == "2026-11-18" and e.prediction["model"] == "not recorded"

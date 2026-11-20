@@ -14,7 +14,7 @@
    "batch_node": {
     "source": "plugins.aydlette_vdr.grift.searches",
     "name": "Aydlette VDR Searches v0.1.0",
-    "description": "The three module Searches: findings, summary and reconciliation."
+    "description": "The four module Searches: findings, summary, reconciliation and coverage."
    },
    "nodes": [
     {
@@ -187,6 +187,55 @@
          "minimum": 1,
          "maximum": 5000,
          "default": 1000
+        }
+       }
+      }
+     }
+    },
+    {
+     "entity": {
+      "entity_id": "eea7adbe-1765-57cc-b927-d3955c301f71",
+      "entity_type": "search",
+      "name": "Aydlette VDR: coverage",
+      "dimensions": {}
+     },
+     "node": {
+      "name": "Aydlette VDR: coverage",
+      "description": "One row per prerequisite (declarations, observers, flows, finding facts, advisory feeds): how much of what it applies to has it, what is missing, and what the method does without it.",
+      "search_type": "module",
+      "root": "node",
+      "definition": {
+       "runner_key": "tap_plugin.aydlette_vdr.searches.coverage:aydlette-coverage"
+      },
+      "input_schema": {
+       "type": "object",
+       "additionalProperties": false,
+       "required": [],
+       "properties": {
+        "profile_id": {
+         "type": "string",
+         "minLength": 1,
+         "default": "aydlette-starter",
+         "description": "Governed profile."
+        },
+        "declaration_source": {
+         "type": "string",
+         "description": "Read only the declarations of this source."
+        },
+        "now": {
+         "type": "string",
+         "format": "date-time",
+         "description": "Evaluate as of this time (default: now)."
+        },
+        "max_results": {
+         "type": "integer",
+         "minimum": 1,
+         "maximum": 5000,
+         "default": 1000
+        },
+        "finding_source": {
+         "type": "string",
+         "description": "Count only the findings of this source."
         }
        }
       }

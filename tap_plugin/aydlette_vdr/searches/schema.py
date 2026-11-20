@@ -33,6 +33,16 @@ RECONCILE_INPUT_SCHEMA: dict[str, Any] = {
     "properties": dict(_COMMON),
 }
 
+COVERAGE_INPUT_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "additionalProperties": False,
+    "required": [],
+    "properties": {
+        **_COMMON,
+        "finding_source": {"type": "string", "description": "Count only the findings of this source."},
+    },
+}
+
 #: The Search nodes the plugin ships: runner key -> (name, description, input schema).
 SEARCHES: dict[str, tuple[str, str, dict[str, Any]]] = {
     "aydlette-pain": (
@@ -49,5 +59,11 @@ SEARCHES: dict[str, tuple[str, str, dict[str, Any]]] = {
         "Aydlette VDR: reconciliation",
         "One row per declared component: declared intent against what the observers saw (Figure 6), G4, G5, G7.",
         RECONCILE_INPUT_SCHEMA,
+    ),
+    "aydlette-coverage": (
+        "Aydlette VDR: coverage",
+        "One row per prerequisite (declarations, observers, flows, finding facts, advisory feeds): how much of what it "
+        "applies to has it, what is missing, and what the method does without it.",
+        COVERAGE_INPUT_SCHEMA,
     ),
 }

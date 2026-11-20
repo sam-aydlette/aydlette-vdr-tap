@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
+import pytest
+
 from tap_plugin.aydlette_vdr import vdr_bridge as vb
 from tap_plugin.aydlette_vdr.method.reconcile import ComponentState
 
@@ -30,6 +32,7 @@ def kinds(doc, etype):
         e for e in b["edges"] if e["edge"]["edge_type"] == etype]  # fmt: skip
 
 
+@pytest.mark.spec("req-aydlette-vdr-bridge-1")
 def test_reconciled_internal_component_backs_unreachable_with_evidence():
     doc, counts = vb.build_evaluations([row()], {"c1": state()}, PROFILE, NOW)
     (ev,) = kinds(doc, vb.EVALUATION)
@@ -48,6 +51,7 @@ def test_reconciled_internal_component_backs_unreachable_with_evidence():
     assert counts["backed_unreachable"] == 1
 
 
+@pytest.mark.spec("req-aydlette-vdr-bridge-2")
 def test_nothing_is_backed_without_clean_reconciliation():
     for st in (state(g7=["stale"]), state(cell="unobserved", path=None), state(g5=["conflict"]), None):
         doc, counts = vb.build_evaluations([row()], {"c1": st} if st else {}, PROFILE, NOW)
@@ -55,12 +59,14 @@ def test_nothing_is_backed_without_clean_reconciliation():
         assert kinds(doc, vb.EVALUATION)[0]["node"]["internet_reachable"] is False  # recorded, not backed
 
 
+@pytest.mark.spec("req-aydlette-vdr-bridge-3")
 def test_dispositions_and_lev_are_recorded_but_never_backed():
     doc, _ = vb.build_evaluations([row(basis="deflection d1")], {"c1": state()}, PROFILE, NOW)
     assert not kinds(doc, vb.FACTOR_EVIDENCE)
     assert kinds(doc, vb.EVALUATION)[0]["node"]["likely_exploitable"] is False
 
 
+@pytest.mark.spec("req-aydlette-vdr-bridge-4")
 def test_several_cves_on_one_finding_combine_to_the_worst():
     rows = [row(vuln="a", pain="N2"), row(vuln="b", irv=True, basis="declared public-edge", lev=True, pain="N4")]
     doc, counts = vb.build_evaluations(rows, {"c1": state()}, PROFILE, NOW)
@@ -71,6 +77,7 @@ def test_several_cves_on_one_finding_combine_to_the_worst():
     assert counts == {"evaluations": 1, "backed_unreachable": 0, "irv": 1, "lev": 1}
 
 
+@pytest.mark.spec("req-aydlette-vdr-bridge-5")
 def test_one_evidence_node_per_component():
     doc, counts = vb.build_evaluations([row("f1"), row("f2")], {"c1": state()}, PROFILE, NOW)
     assert len(kinds(doc, vb.EVIDENCE)) == 1 and counts["backed_unreachable"] == 2

@@ -71,6 +71,7 @@ def rate(c_i_a: str, cr_ir_ar: str, m: int) -> str:
         ("HNN", "LMM", 0, "N2"),  # example 5: U is exactly 0.28, on the first boundary
     ],
 )
+@pytest.mark.spec("req-aydlette-vdr-pain-8")
 def test_the_memos_five_worked_examples(c_i_a, cr_ir_ar, m, expected):
     assert rate(c_i_a, cr_ir_ar, m) == expected
 
@@ -83,12 +84,14 @@ def test_the_memos_five_worked_examples(c_i_a, cr_ir_ar, m, expected):
         (("public",), False, "single", "HHH", "N3"),  # example 3: public is LLL
     ],
 )
+@pytest.mark.spec("req-aydlette-vdr-pain-8")
 def test_examples_1_to_3_end_to_end_from_a_declaration(data, mission_critical, scope, c_i_a, expected):
     """The requirements come from the declared classification, as they would on a grid."""
     decl = D("internal", data=data, mission_critical=mission_critical, agency_scope=scope)
     assert ev(F(cvss_vector=vector(c_i_a)), [decl], profile=profile()).pain == expected
 
 
+@pytest.mark.spec("req-aydlette-vdr-pain-10")
 def test_examples_4_and_5_need_requirements_no_classification_produces():
     """MMH and LMM are not in the default needs map (Mission Critical raises both I and A), so on a grid examples 4 and
     5 need a profile whose needs map produces them: a published deviation, as REQ-PAI-4 allows."""
@@ -99,6 +102,7 @@ def test_examples_4_and_5_need_requirements_no_classification_produces():
 
 
 # ------------------------------------------------------------------------------------------- where the two still differ
+@pytest.mark.spec("req-aydlette-vdr-pain-10")
 def test_difference_unresolved_findings_and_missing_vectors():
     """stackArmor: a missing vector is High on C, I and A, rated at the asset profile's requirements.
     This method: the same High impact, but an unresolved finding has the fail-safe classification (PII, CUI, Mission
@@ -107,6 +111,7 @@ def test_difference_unresolved_findings_and_missing_vectors():
     assert unresolved.pain == "N5"
 
 
+@pytest.mark.spec("req-aydlette-vdr-pain-10")
 def test_difference_ssvc_total_raises_the_score():
     """With the SSVC overlay on, a CISA Technical Impact of total that the vector does not show scores every affected
     property High. stackArmor reads only the vector. At HHH needs, single agency, C:H/I:L/A:L scores S = 0.932 as written

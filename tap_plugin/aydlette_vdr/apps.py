@@ -4,7 +4,7 @@ from tap_plugins.base import TapPluginConfig
 
 
 class AydletteVdrConfig(TapPluginConfig):
-    """Seven models, seven edges, two seeds, three Search runners and one collector, which writes the method's results
+    """Seven models, seven edges, two seeds, four Search runners and one collector, which writes the method's results
     as fedramp_20x_vdr evaluations of scheme `aydlette`."""
 
     def ready(self) -> None:

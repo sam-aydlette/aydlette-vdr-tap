@@ -141,10 +141,10 @@ def _check_vectors(today: Any, *, db_alias: str) -> dict[str, CheckVector]:
     }
 
 
-def reconcile_components(
-    p: dict[str, Any], profile: dict[str, Any], now: datetime, *, db_alias: str
-) -> tuple[dict[str, rc.ComponentState], dict[str, m.Declaration]]:
-    """Every declared component's reconciliation state, and its (merged) declaration, keyed by the component's node id."""
+def load_reconcile_inputs(
+    p: dict[str, Any], *, db_alias: str
+) -> tuple[dict[str, m.Declaration], list[rc.Observation], list[rc.Flow]]:
+    """The merged declarations by component node id, every observation and every declared flow."""
     scope = read_scope.DEFAULT_SCOPE
     decl_rel = read_scope.node_relation(scope, ComponentDeclaration, db_alias=db_alias)
     if p.get("declaration_source"):
@@ -180,6 +180,14 @@ def reconcile_components(
         for fid, r in flow_rows.items()
         if fid in f_src and fid in f_dst
     ]  # fmt: skip
+    return merged, observations, flows
+
+
+def reconcile_components(
+    p: dict[str, Any], profile: dict[str, Any], now: datetime, *, db_alias: str
+) -> tuple[dict[str, rc.ComponentState], dict[str, m.Declaration]]:
+    """Every declared component's reconciliation state, and its (merged) declaration, keyed by the component's node id."""
+    merged, observations, flows = load_reconcile_inputs(p, db_alias=db_alias)
     states = rc.reconcile(
         merged, observations, flows, now=now, freshness_hours=profile.get("observer_freshness_hours", 24)
     )

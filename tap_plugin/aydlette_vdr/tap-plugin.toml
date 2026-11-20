@@ -39,6 +39,7 @@ searches = "grift/searches.grift.json"
 aydlette-pain = "tap_plugin.aydlette_vdr.searches.pain.aydlette_pain"
 aydlette-summary = "tap_plugin.aydlette_vdr.searches.pain.aydlette_summary"
 aydlette-reconcile = "tap_plugin.aydlette_vdr.searches.pain.aydlette_reconcile"
+aydlette-coverage = "tap_plugin.aydlette_vdr.searches.coverage.aydlette_coverage"
 
 [[boot.records]]
 name = "ci"

@@ -55,6 +55,21 @@ too for public-edge ones, or G7 fails.
   declaration).
 * `aydlette-summary`: the same evaluation, aggregated: counts by rating, column, group and state, the gates, the decision
   queue with its rates (REQ-QUE-1), and the number of findings the public tier withholds (REQ-PUB-4).
+* `aydlette-coverage`: whether the environment gives the method what it needs. Without a prerequisite the method takes
+  the worst case, fails a gate or queues a decision. Its answer is still correct, but pessimistic. One row per
+  prerequisite gives what it applies to, how much has it, the items missing it, and what the method does without it:
+  * **declarations:** declared; intent, data, agency scope; who classified the data and who judged Mission Critical;
+    no contradictions.
+  * **observers:** fresh inside-out and outside-in observations; no undeclared exposure.
+  * **flows:** public-backed components fed by a declared flow; observed flows that are declared; flows that state what
+    they carry.
+  * **findings:** resolved to a component, and IRV, LEV, impact and needs decided on evidence rather than a fail-safe.
+  * **advisories:** for CVE, GHSA and other advisory IDs, the CVSS vector, KEV status, EPSS and SSVC. These are the
+    fields vuln_mosaic fills from NVD, KEV, EPSS and CISA Vulnrichment.
+  * **checks:** for Checkov, ZAP and other check IDs, a CVSS vector, from the record or a governed check vector.
+
+  The inventory is every node an observer looked at, a declaration names, or an open finding is carried by. The adapter
+  decides what is in scope by what it observes, so the Search needs no platform knowledge (`method/coverage.py`).
 
 Every output carries the profile's id, version, sha256 and deviations from the global defaults (REQ-GOV-1, REQ-PAI-4),
 along with where the timeframes came from (REQ-RUL-2).
@@ -124,6 +139,10 @@ A profile is refused (the Search fails) when θ or its rationale is missing, whe
 * Template inheritance (REQ-IRV-7) beyond what an adapter groups, third-party linked findings (REQ-TPR) and rating
   history (REQ-PAI-2).
 * Panels.
+
+## Specification and contributing
+
+[`specs/spec-aydlette-vdr-v0.md`](specs/spec-aydlette-vdr-v0.md) maps every requirement to the code and the test that proves it, including each of the paper's Appendix B conformance tests. Its Paper Coverage table shows how many are implemented. [`CONTRIBUTING.md`](CONTRIBUTING.md) defines when a change, a release and the method are done.
 
 ## How this was made
 
