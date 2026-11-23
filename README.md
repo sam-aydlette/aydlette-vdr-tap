@@ -42,6 +42,23 @@ declared flow that carries a flag the receiver lacks, or states neither its cont
 Observers must have looked within `observer_freshness_hours` (at most 24): inside-out for every component, outside-in
 too for public-edge ones, or G7 fails.
 
+## The environmental vector
+
+Before anything reads a finding's vector, CVSS Environmental metrics are set where reconciliation backs them, and only
+there (`environmental` in `method/evaluate.py`):
+
+| Modified metric | Set when |
+|---|---|
+| Attack Vector: Adjacent | declared internal, consistent, a fresh observation found no path, G4, G5 and G7 pass |
+| Privileges Required: Low | a fresh `unauth-ingress` observation found no ingress that takes unauthenticated requests, consistent, no undeclared flow in, G4, G5 and G7 pass |
+
+A modified metric only lowers a Base value of Network or None. Everything else stays X, User Interaction included,
+because no observer can show that a flaw fires only when a user acts. The security requirements are the needs map's,
+which the decision table already weighs, so no separate scoring function or score band is applied. A backed
+Privileges Required lifts the FRD-LEV floor, and the prediction score then decides LEV. Each row's `environmental` block
+gives the Base vector, the environmental one and each metric's basis. The vector is the newest CVSS version the enricher
+writes.
+
 ## Searches
 
 * `aydlette-pain` (`fedramp_class` is required; `profile_id` defaults to `aydlette-starter`): one row per open finding,
@@ -91,24 +108,7 @@ Other methods read a factor as the worst case unless evidence backs it. This col
 finds it consistent, a fresh observation found no path, and G4, G5 and G7 pass. The evidence node
 (`compliance_evidence`, source `aydlette_vdr`, key `reconcile:<component>`) lists the observations. LEV false,
 narrowing and deflection are recorded but not backed: none of them is one of the nine CycloneDX justifications.
-stackarmor_vdr reads these evaluations with `evaluation_scheme: aydlette`.
-
-## stackArmor's worked examples
-
-`combining = "cvss_environmental"` runs stackArmor's rating as a published deviation. `tests/test_stackarmor_examples.py`
-encodes the memo's weights and boundaries as a profile, with `isc_cap` set to the memo's D_H and the U boundaries
-divided by D_H. All five worked examples give the memo's N-levels. Exact boundaries can be written as decimal
-strings: example 5 sits exactly on U = 0.28.
-
-The two methods still differ in two places, and the tests show both:
-
-* An unresolved finding here takes the fail-safe classification (HHH needs, multi-agency). stackArmor rates it at the
-  container's or archetype's profile.
-* With the SSVC overlay on, a CISA Technical Impact of total that the vector does not show scores every affected
-  property High. stackArmor reads only the vector. C:H/I:L/A:L at HHH, single agency, is N3 there and N4 here.
-
-Examples 4 and 5 use requirement vectors (MMH, LMM) that the default needs map cannot produce. On a grid they need a
-profile whose needs map does.
+Any method that reads fedramp_20x_vdr evaluations can read these by `evaluation_scheme: aydlette`.
 
 ## Profiles
 
@@ -129,6 +129,7 @@ A profile is refused (the Search fails) when θ or its rationale is missing, whe
   T19, T23, T28, T32, T34, T35, T38, T40, T43, T44, T48, T54 to T58, T61 to T63, T68 to T70, and the paper's HTTP/2
   scenario). Run them with
   `uv run --no-project --python 3.14 --with pytest python -m pytest tap_plugin/aydlette_vdr/tests/test_conformance.py`.
+* `tests/test_environmental.py`: the environmental vector and what reconciliation backs for it, on the pure core.
 * `models/`, `edges/`, `grift/`, `searches/`: the TAP layer.
 
 ## Not in v0.1

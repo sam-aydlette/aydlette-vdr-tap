@@ -25,6 +25,17 @@ classified as if it carried the source's data flags until someone decides (T47).
 Observer coverage (REQ-IRV-3): every declared component needs a fresh inside-out observation, and every public-edge one a
 fresh outside-in observation too, within the freshness window (at most a day). A missing or stale observation is a
 detection failure: G7.
+
+Unauthenticated ingress (kind ``unauth-ingress``): whether a request can reach a component without authenticating.
+`path_found` false means every ingress the observer sees requires authentication. It is optional evidence: without a
+fresh answer nothing is backed and nothing fails.
+
+What reconciliation backs, for the environmental vector (method/evaluate.py, `environmental`):
+
+* the perimeter (`perimeter_backed`): declared internal, Figure 6 consistent, a fresh observation found no path from the
+  internet, and G4, G5 and G7 pass. The same evidence backs `internet_reachable = false` in the bridge.
+* authenticated ingress (`ingress_authenticated`): every fresh unauth-ingress observation found no unauthenticated
+  path, Figure 6 consistent, no undeclared flow observed into the component, and G4, G5 and G7 pass.
 """
 
 from __future__ import annotations
@@ -36,11 +47,12 @@ from .evaluate import EXPOSURE_ORDER, Declaration
 
 INTERNET_PATH = "internet-path"
 FLOW = "flow"
+UNAUTH_INGRESS = "unauth-ingress"
 INSIDE_OUT = "inside-out"
 OUTSIDE_IN = "outside-in"
 TELEMETRY = "telemetry"
 OBSERVERS: tuple[str, ...] = (INSIDE_OUT, OUTSIDE_IN, TELEMETRY)
-KINDS: tuple[str, ...] = (INTERNET_PATH, FLOW)
+KINDS: tuple[str, ...] = (INTERNET_PATH, FLOW, UNAUTH_INGRESS)
 SENSITIVE: frozenset[str] = frozenset({"pii", "cui"})
 MAX_FRESHNESS_HOURS = 24  # "at least once a day" (REQ-IRV-3); a profile may only shorten it
 
@@ -81,6 +93,30 @@ class ComponentState:
     queue: list[dict[str, str]] = field(default_factory=list)
     inherited_data: tuple[str, ...] = ()
     evidence: list[dict[str, object]] = field(default_factory=list)
+    unauthenticated_path: bool | None = None  # None: no fresh unauth-ingress observation
+    ingress_evidence: list[dict[str, object]] = field(default_factory=list)
+
+
+def perimeter_backed(st: ComponentState | None) -> bool:
+    """Reconciliation backs this component's protection at the perimeter (see the module docstring)."""
+    return (
+        st is not None
+        and st.intent == "internal"
+        and st.cell == "consistent"
+        and st.observed_path is False
+        and not (st.g4 or st.g5 or st.g7)
+    )
+
+
+def ingress_authenticated(st: ComponentState | None) -> bool:
+    """Reconciliation backs that every request into this component must authenticate (see the module docstring)."""
+    return (
+        st is not None
+        and st.unauthenticated_path is False
+        and st.cell == "consistent"
+        and not (st.g4 or st.g5 or st.g7)
+        and not any(q["kind"] == "undeclared-flow" for q in st.queue)
+    )
 
 
 def _public(decl: Declaration | None) -> bool:
@@ -103,10 +139,13 @@ def reconcile(
         return o.observed_at is not None and now - o.observed_at <= window
 
     paths: dict[str, list[Observation]] = {}
+    ingress: dict[str, list[Observation]] = {}
     observed_flows: list[Observation] = []
     for o in observations:
         if o.kind == INTERNET_PATH:
             paths.setdefault(o.target, []).append(o)
+        elif o.kind == UNAUTH_INGRESS:
+            ingress.setdefault(o.target, []).append(o)
         elif o.kind == FLOW and o.source:
             observed_flows.append(o)
 
@@ -211,6 +250,15 @@ def reconcile(
             if src is not None and SENSITIVE & set(src.data):
                 inherited |= SENSITIVE & set(src.data)
         st.inherited_data = tuple(sorted(inherited - set(decl.data)))
+
+        # Unauthenticated ingress: one fresh answer that found a path is enough to say there is one.
+        auth = [o for o in ingress.get(cid, []) if fresh(o)]
+        st.unauthenticated_path = any(o.path_found for o in auth) if auth else None
+        st.ingress_evidence = [
+            {"observer": o.observer, "path_found": o.path_found, "observed_at": o.observed_at.isoformat() if o.observed_at else None,
+             "fresh": fresh(o), "evidence": o.evidence}
+            for o in ingress.get(cid, [])
+        ]  # fmt: skip
 
         # What the observations alone suggest. A suggestion is published beside the declaration, never used as one.
         if observed:

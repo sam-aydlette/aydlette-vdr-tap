@@ -87,3 +87,13 @@ def parse(vector: str | None) -> Vector | None:
         user_interaction=metrics["UI"] != "N",
         impact=impact,  # type: ignore[arg-type]
     )
+
+
+def with_environmental(vector: str, modified: dict[str, str]) -> str:
+    """The Base vector with this method's Environmental metrics appended (`MAV:A`, `MPR:L`), in the syntax CVSS 3.x and
+    4.0 share for them. Any Environmental, Threat or Supplemental metric the record carries is dropped: it describes the
+    publisher's environment, not this one, and the method never reads it."""
+    parts = vector.strip().split("/")
+    base = _BASE[parts[0].removeprefix("CVSS:")]
+    kept = [p for p in parts[1:] if p.partition(":")[0] in base]
+    return "/".join([parts[0], *kept, *(f"{k}:{v}" for k, v in modified.items())])

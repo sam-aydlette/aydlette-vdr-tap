@@ -1,8 +1,8 @@
 """aydlette_vdr's results as fedramp_20x_vdr evaluations (scheme `aydlette`). Pure: rows in, a GRIFT batch out.
 
 fedramp_20x_vdr keeps one `vdr_evaluation` per finding per scheme, and reads a factor as the worst case unless evidence
-backs it (`backed_factors`). Writing this method's results there puts them on the same grid as VDR-max and any other
-method, such as stackarmor_vdr, which can read them by evaluation scheme.
+backs it (`backed_factors`). Writing this method's results there puts them on the same grid as any other method that
+reads evaluations by scheme.
 
 What is written, per finding (several CVEs on one finding combine to the worst):
 
@@ -25,7 +25,7 @@ from collections import defaultdict
 from datetime import datetime
 from typing import Any
 
-from .method.reconcile import ComponentState
+from .method.reconcile import ComponentState, perimeter_backed
 
 SCHEME = "aydlette"
 SOURCE = "aydlette_vdr"
@@ -41,15 +41,7 @@ LEVELS = ("N0", "N1", "N2", "N3", "N4", "N5")
 
 def backs_unreachable(row: dict[str, Any], state: ComponentState | None) -> bool:
     """Whether reconciliation supports `internet_reachable = false` for this row's component."""
-    return (
-        state is not None
-        and not row["irv"]
-        and row["irv_basis"] == "declared internal"
-        and state.intent == "internal"
-        and state.cell == "consistent"
-        and state.observed_path is False
-        and not (state.g4 or state.g5 or state.g7)
-    )
+    return not row["irv"] and row["irv_basis"] == "declared internal" and perimeter_backed(state)
 
 
 def _evidence_text(state: ComponentState) -> str:

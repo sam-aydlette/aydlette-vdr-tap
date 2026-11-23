@@ -226,7 +226,7 @@ def test_t68_half_an_overlay_fails_the_build():
 
 
 # --------------------------------------------------------------------------------------------------------------- impact
-@pytest.mark.spec("req-aydlette-vdr-pain-9")
+@pytest.mark.spec("req-aydlette-vdr-pain-8")
 def test_scenario_http2_flood_docs_site_n1_filing_api_n4():
     docs = Declaration("docs", exposure_intent="public-edge", data=("public",), agency_scope="multi")
     api = Declaration("api", exposure_intent="public-edge", data=("cui",), mission_critical=True, agency_scope="multi")
@@ -269,18 +269,6 @@ def test_a_fallback_straight_to_the_scale_is_refused():
     """It would skip the classification and the fail-safe (REQ-PAI-6, -7)."""
     with pytest.raises(prof.ProfileError):
         P(severity_fallback={"mode": "scale", "map": {"medium": "N2"}})
-
-
-@pytest.mark.spec("req-aydlette-vdr-pain-8")
-def test_cvss_environmental_combining_is_selectable():
-    env = {"impact_weights": {"none": 0, "low": 0.22, "high": 0.56},
-           "requirement_weights": {"low": 0.5, "medium": 1.0, "high": 1.5},
-           "isc_cap": 0.915, "word_thresholds": {"minimal_to_narrow": 0.25, "narrow_to_disruptive": 0.55,
-                                                 "disruptive_to_debilitating": 0.80}}  # fmt: skip
-    p = P(combining="cvss_environmental", cvss_environmental=env)
-    e = ev(F(cvss_vector=AVAIL), [D(data=("public",), agency_scope="single")], profile=p)
-    assert e.pain == "N2" and e.pain_values["detail"].startswith("S=")
-    assert "combining" in prof.deviations(p)
 
 
 # ------------------------------------------------------------------------------------------------- dispositions, clock

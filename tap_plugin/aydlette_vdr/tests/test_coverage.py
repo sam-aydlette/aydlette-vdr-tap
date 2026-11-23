@@ -105,7 +105,7 @@ def test_no_advisories_is_not_applicable_rather_than_failing():
 @pytest.mark.parametrize(
     ("vid", "advisory"),
     [("CVE-2024-3094", True), ("cve-2021-44228", True), ("GHSA-jfh8-c2jp-5v3q", True), ("PYSEC-2023-12", True),
-     ("GO-2024-2687", True), ("CKV_AWS_117", False), ("zap:10099", False), ("AVD-AWS-0089", False), (None, False)],
+     ("GO-2024-2687", True), ("MAL-2023-1234", True), ("MAL-2023-", False), ("CKV_AWS_117", False), ("zap:10099", False), ("AVD-AWS-0089", False), (None, False)],
 )  # fmt: skip
 @pytest.mark.spec("req-aydlette-vdr-coverage-7")
 def test_advisory_ids(vid, advisory):

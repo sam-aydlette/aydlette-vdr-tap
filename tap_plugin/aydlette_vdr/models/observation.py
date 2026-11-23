@@ -14,8 +14,8 @@ DATA = ("public", "internal", "pii", "cui")
 
 
 class Observation(BaseModel):
-    """One observer's latest answer for one component: a path from the internet (`internet-path`) or a flow from another
-    component (`flow`). The identity is the observer's key for (component, observer, kind), so each run overwrites the
+    """One observer's latest answer for one component: a path from the internet (`internet-path`), a flow from another
+    component (`flow`), or an ingress that takes unauthenticated requests (`unauth-ingress`). The identity is the observer's key for (component, observer, kind), so each run overwrites the
     node and the node's history is the evidence trail. `OBSERVES_COMPONENT` points at the component (any node); a flow's
     sender is `OBSERVES_SENDER`.
     """
@@ -24,8 +24,8 @@ class Observation(BaseModel):
     NATURAL_KEY: ClassVar[tuple[str, ...]] = ("source", "observation_key")
     ENTITY_NAME: ClassVar[str] = "Observation"
     ENTITY_DESCRIPTION: ClassVar[str] = (
-        "An observer's finding about a component: whether a path from the internet, or a flow from another component, "
-        "exists, when it looked, and on what evidence."
+        "An observer's finding about a component: whether a path from the internet, a flow from another component, or an "
+        "ingress that takes unauthenticated requests exists, when it looked, and on what evidence."
     )
     ENTITY_ICON: ClassVar[str] = "observation"
     DEFAULT_DIMENSIONS: ClassVar[dict[str, str]] = c.DIMENSIONS

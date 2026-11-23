@@ -7,15 +7,22 @@ likely exploitable (Figure 7), a missing vector and severity is total impact (RE
 (REQ-PAI-3) and an unknown fix state is fixable (REQ-VD-2).
 
 Reconciliation (method/reconcile.py) runs first and hands its results in on the declaration: undeclared exposure (G4),
-contradicting declarations (G5), missing or stale observations (G7) and data flags an undeclared flow may carry in. G6 and
-the build-side part of G7 (a stale scanner database, a missing feed) are the pipeline's.
+contradicting declarations (G5), missing or stale observations (G7), data flags an undeclared flow may carry in, and what
+it backs for the environmental vector. G6 and the build-side part of G7 (a stale scanner database, a missing feed) are the
+pipeline's.
+
+The environmental vector (`environmental`): before anything reads the vector, CVSS Environmental metrics are set where
+reconciliation backs them, and only there. Modified Attack Vector is Adjacent when the perimeter is backed; Modified
+Privileges Required is Low when authenticated ingress is backed. Each lowers only a Base value of Network or None. Every
+other modified metric stays X (the Base value), as does every metric on an unresolved finding. The security requirements
+(CR, IR, AR) are the needs map's, which the decision table already weighs. The record's own Environmental metrics describe
+its publisher's environment and are never read.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import date, datetime, timedelta
-from decimal import Decimal
 from typing import Any
 
 from . import vector as vec
@@ -57,6 +64,8 @@ class Declaration:
     conflicts: tuple[str, ...] = ()  # set by reconciliation: declarations that contradict each other (G5)
     observer_gaps: tuple[str, ...] = ()  # set by reconciliation: no fresh observation (G7)
     inherited_data: tuple[str, ...] = ()  # set by reconciliation: flags an undeclared flow may carry in (REQ-PAI-5)
+    perimeter_backed: bool = False  # set by reconciliation: backs Modified Attack Vector Adjacent
+    ingress_authenticated: bool = False  # set by reconciliation: backs Modified Privileges Required Low
 
 
 @dataclass(frozen=True)
@@ -135,6 +144,8 @@ def merge_declarations(decls: list[Declaration]) -> Declaration | None:
         conflicts=tuple(c for d in decls for c in d.conflicts),
         observer_gaps=tuple(g for d in decls for g in d.observer_gaps),
         inherited_data=tuple(sorted({f for d in decls for f in d.inherited_data})),
+        perimeter_backed=all(d.perimeter_backed for d in decls),
+        ingress_authenticated=all(d.ingress_authenticated for d in decls),
     )
 
 
@@ -201,6 +212,45 @@ def disposition_state(d: Disposition, finding: Finding, today: date) -> tuple[bo
         if d.vex_version != finding.deployed_version:
             return False, f"the VEX statement covers {d.vex_version}, not the deployed version (T69)"
     return True, "in force"
+
+
+# ------------------------------------------------------------------------------------------------ environmental vector
+def environmental(
+    finding: Finding, v: vec.Vector | None, decl: Declaration | None
+) -> tuple[Finding, vec.Vector | None, dict[str, Any]]:
+    """The finding and vector with the Environmental metrics reconciliation backs (see the module docstring), and the
+    block that publishes them: the Base vector, the environmental one, and each modified metric with its basis."""
+    network, privileges, _user = _access(finding, v)
+    modified: dict[str, str] = {}
+    basis: dict[str, str] = {}
+    if decl is not None and decl.perimeter_backed and network:
+        modified["MAV"] = "A"
+        basis["MAV"] = "perimeter backed: declared internal, consistent, no path observed"
+    if decl is not None and decl.ingress_authenticated and privileges is False:
+        modified["MPR"] = "L"
+        basis["MPR"] = "authenticated ingress backed: every observed ingress requires authentication"
+    read = finding.cvss_vector if v is not None else None
+    block: dict[str, Any] = {
+        "base_vector": read,
+        "vector": vec.with_environmental(read, modified) if read else None,
+        "modified": modified,
+        "basis": basis,
+    }
+    if not modified:
+        return finding, v, block
+    if v is not None:
+        v = replace(
+            v,
+            network=v.network and "MAV" not in modified,
+            privileges=v.privileges or "MPR" in modified,
+        )
+    else:
+        net, priv, user = finding.access
+        finding = replace(
+            finding,
+            access=(False if "MAV" in modified else net, True if "MPR" in modified else priv, user),
+        )
+    return finding, v, block
 
 
 # ------------------------------------------------------------------------------------------------------------ IRV, LEV
@@ -294,35 +344,6 @@ def technical_impact(finding: Finding, v: vec.Vector | None, profile: dict[str, 
     return "total", "no vector and no mapped severity (REQ-PAI-7)"
 
 
-def _env_effect(
-    v: vec.Vector | None, need: dict[str, str], raise_to_total: bool, env: dict[str, Any]
-) -> tuple[str, str]:
-    """CVSS-Environmental: U = 1 - prod(1 - impact_weight * requirement_weight), S = min(U, cap) / cap.
-
-    The vector's C, I and A are scored as written, as CVSS does; with no vector all three are High. `raise_to_total` is set
-    only when the SSVC overlay supplies a Technical Impact of total that the vector does not show: then every affected
-    property scores High, because the overlay knows more than the vector."""
-    iw, rw = env["impact_weights"], env["requirement_weights"]
-    impact = v.impact if v is not None else ("high", "high", "high")
-    survive = Decimal(1)
-    for prop, level in zip(("c", "i", "a"), impact, strict=True):
-        if raise_to_total and level != "none":
-            level = "high"
-        survive *= 1 - Decimal(str(iw[level])) * Decimal(str(rw[need[prop]]))
-    cap = Decimal(str(env["isc_cap"]))
-    s = min(1 - survive, cap) / cap
-    t = {k: Decimal(str(x)) for k, x in env["word_thresholds"].items()}
-    if s < t["minimal_to_narrow"]:
-        effect = "minimal"
-    elif s < t["narrow_to_disruptive"]:
-        effect = "narrow"
-    elif s < t["disruptive_to_debilitating"]:
-        effect = "disruptive"
-    else:
-        effect = "debilitating"
-    return effect, f"S={s:.4f}"
-
-
 def pain(
     finding: Finding,
     v: vec.Vector | None,
@@ -338,15 +359,7 @@ def pain(
     affected = v.affected if v is not None else ("c", "i", "a")
     rank = {lv: n for n, lv in enumerate(NEED_LEVELS)}
     need_met = max((need[p] for p in affected), key=rank.__getitem__) if affected else "low"
-    if profile["combining"] == "cvss_environmental":
-        overlay_total = (
-            bool(profile["ssvc_overlay"]["automatable_floor"])
-            and finding.ssvc_technical_impact == "total"
-            and not (v is not None and v.total)
-        )
-        effect, detail = _env_effect(v, need, overlay_total, profile["cvss_environmental"])
-    else:
-        effect, detail = profile["effect_table"][need_met][ti], "decision table"
+    effect, detail = profile["effect_table"][need_met][ti], "decision table"
     level = profile["scale"][effect][scope]
     return level, {
         "function": profile["combining"],
@@ -388,6 +401,7 @@ class Evaluation:
     queue: list[dict[str, str]] = field(default_factory=list)
     declared_by: dict[str, str] = field(default_factory=dict)
     prediction: dict[str, Any] = field(default_factory=dict)
+    environmental: dict[str, Any] = field(default_factory=dict)
 
     def as_row(self) -> dict[str, Any]:
         row = dict(self.__dict__)
@@ -445,7 +459,7 @@ def evaluate(
                 }
             )
 
-    v = vec.parse(finding.cvss_vector)
+    finding, v, env = environmental(finding, vec.parse(finding.cvss_vector), decl)
     irv_value, irv_basis = irv(finding, decl, resolved, in_force)
     lev_value, lev_basis = lev(finding, irv_value, v, profile, in_force)
     need, scope, needs_basis = needs(decl, profile)
@@ -538,4 +552,5 @@ def evaluate(
             "feed_date": finding.prediction_date.isoformat() if finding.prediction_date else NOT_RECORDED,
             "model": finding.prediction_model or NOT_RECORDED,
         },
+        environmental=env,
     )  # fmt: skip

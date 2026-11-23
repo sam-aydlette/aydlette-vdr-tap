@@ -241,6 +241,8 @@ def evaluate_rows(
                 conflicts=tuple(st.g5),
                 observer_gaps=tuple(st.g7),
                 inherited_data=st.inherited_data,
+                perimeter_backed=rc.perimeter_backed(st),
+                ingress_authenticated=rc.ingress_authenticated(st),
             )
         )
 
@@ -392,7 +394,8 @@ def aydlette_summary(search: Search, inputs: dict[str, Any], *, db_alias: str, l
 
 def aydlette_reconcile(search: Search, inputs: dict[str, Any], *, db_alias: str, layer: str = "full") -> dict[str, Any]:
     """One row per declared component: its declared intent, what the observers saw, the Figure 6 cell, G4, G5 and G7,
-    queue items, whether it is publicly exposed (REQ-IRV-13), and the intent the observations alone suggest."""
+    queue items, whether it is publicly exposed (REQ-IRV-13), the intent the observations alone suggest, and what it backs
+    for the environmental vector (the perimeter, authenticated ingress)."""
     p = _inputs(inputs, RECONCILE_INPUT_SCHEMA)
     now = _as_of(p.get("now"))
     profile, block = load_profile(p["profile_id"], db_alias=db_alias)
@@ -407,6 +410,8 @@ def aydlette_reconcile(search: Search, inputs: dict[str, Any], *, db_alias: str,
         row = dict(st.__dict__)
         row["component_name"] = names.get(cid)
         row["data"] = list(merged[cid].data)
+        row["perimeter_backed"] = rc.perimeter_backed(st)
+        row["ingress_authenticated"] = rc.ingress_authenticated(st)
         rows.append(row)
     summary = {
         "components": len(rows),

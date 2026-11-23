@@ -46,6 +46,7 @@ Each requirement groups the paper's requirements for one part of the method. Its
 | req-aydlette-vdr-reconcile | [Reconciliation](#reconciliation) | Implemented | Figure 6: declared intent and flows against what the observers saw; G4, G5 and G7; flows carry classification. |
 | req-aydlette-vdr-irv | [Internet Reachability](#internet-reachability) | In Development | Figure 5: unresolved is IRV; narrowing and tested deflection lower it; nothing else does. |
 | req-aydlette-vdr-lev | [Likely Exploitability](#likely-exploitability) | In Development | Figure 7 and the SSVC overlay, first match deciding; θ governed; overrides only by disposition. |
+| req-aydlette-vdr-env | [The Environmental Vector](#the-environmental-vector) | Implemented | CVSS Environmental metrics set only where reconciliation backs them, before anything reads the vector. |
 | req-aydlette-vdr-pain | [Impact (PAIN)](#impact-pain) | In Development | Three layers: inputs, a governed combining function, a governed mapping onto the rules' scale. |
 | req-aydlette-vdr-clock | [The Clock](#the-clock) | In Development | Start from first evaluation, carried forward; a verified mitigation starts a new clock; the overdue limit never resets. |
 | req-aydlette-vdr-dispositions | [Dispositions](#dispositions) | In Development | Decision records with deciders and review dates; false positives, mitigations, vendor dependency and VEX. |
@@ -79,7 +80,7 @@ The method never carries a FedRAMP number in code. Timeframes, the maximum overd
 | ACID | Title | Status | Description | Notes |
 | --- | --- | :---: | --- | --- |
 | req-aydlette-vdr-rules-1 | A new rules level fails until mapped | Implemented | T19: The pinned rules add a level to the impact scale; the profile is refused until its mapping covers it. | `test_t19_a_new_rules_level_fails_until_the_mapping_covers_it` |
-| req-aydlette-vdr-rules-2 | Timeframes read from rule rows | In Development | REQ-RUL-1: Every due date comes from `deadline_hours` and every accept-by from `acceptance_hours`; no timeframe constant exists in the plugin. | Built in `searches/pain.py`; needs a grid test. |
+| req-aydlette-vdr-rules-2 | Timeframes read from rule rows | Implemented | REQ-RUL-1: Every due date comes from `deadline_hours` and every accept-by from `acceptance_hours`; no timeframe constant exists in the plugin. | `test_due_dates_come_from_the_seeded_rule_rows` (grid) |
 | req-aydlette-vdr-rules-3 | Outputs record the rules | In Development | REQ-RUL-2: Every Search output carries the `rules` block (source, row count, read date, URLs). | Built in `rules_block`; needs a grid test. |
 
 ### One Finding Stream
@@ -107,7 +108,7 @@ The plugin reads every open `compliance_core__compliance_finding`, whatever its 
 | ACID | Title | Status | Description | Notes |
 | --- | --- | :---: | --- | --- |
 | req-aydlette-vdr-sources-1 | A non-machine finding is NIRV | Implemented | T32: A finding on a process that touches no machine-based resource is NIRV. | `test_t32_non_machine_finding_is_nirv` |
-| req-aydlette-vdr-sources-2 | Every finding enters one stream | In Development | REQ-SRC-1: Every open compliance finding is evaluated, including findings with no vulnerability record, and keeps its source's detection time. | Built; on the r20x grid all 35 Checkov, tfsec and ZAP findings are evaluated. Needs a grid test. |
+| req-aydlette-vdr-sources-2 | Every finding enters one stream | Implemented | REQ-SRC-1: Every open compliance finding is evaluated, including findings with no vulnerability record, and keeps its source's detection time. | `test_a_finding_with_no_record_is_evaluated_in_the_same_stream` (grid) |
 | req-aydlette-vdr-sources-3 | Penetration test findings | Backlog | T29: A penetration test report naming a URL on a public-edge component yields one finding per weakness, resolved to the component, detected on the report date. | Needs a penetration-test input; resolution is the shared-identifier rule. |
 | req-aydlette-vdr-sources-4 | A control gap opens a finding | Backlog | T30: A Rev5 control's status changing to Partially Implemented opens a finding on its SDR entry, detected that day; the entry lists it. | Needs an SDR model (REQ-SRC-2, REQ-SRC-4). |
 | req-aydlette-vdr-sources-5 | A changed control setting opens a finding | Backlog | T31: A setting named by a control statement changes; a finding opens against the statement until it is confirmed or rewritten. | REQ-SRC-5. |
@@ -260,7 +261,39 @@ LEV is decided by Figure 7, each check independent and the first match deciding:
 | req-aydlette-vdr-lev-13 | Overlay: no recorded Exploitation skips the PoC check | Implemented | T58: Under the SSVC overlay: NIRV finding recorded Automatable, with no recorded Exploitation; prediction score below θ. Then: NLEV. The proof-of-concept check is skipped. | `test_t58_overlay_no_recorded_exploitation_skips_the_poc_check` |
 | req-aydlette-vdr-lev-14 | Overlay: a pentest PoC needing a login is LEV | Implemented | T59: Under the SSVC overlay: penetration test finding that needs a login; the tester records a proof of concept and Automatable. Then: LEV. | `test_t59_overlay_pentest_finding_needing_a_login_with_a_poc_is_lev` |
 | req-aydlette-vdr-lev-15 | Overlay: SSVC values published with source and time | Backlog | T60: Under the SSVC overlay: a finding’s Exploitation, Automatable and Technical Impact. Then: Each published with its source and time. An unrecorded value is published as not recorded. | `finding_facts` stores `ssvc_source` and `ssvc_recorded_at`, but no output publishes them yet (REQ-LEV-5). |
-| req-aydlette-vdr-lev-16 | The overlay is named in each output | In Development | REQ-LEV-8: Each output's profile block says whether the overlay is on. | Built (`ssvc_overlay` in the profile block); needs a test. |
+| req-aydlette-vdr-lev-16 | The overlay is named in each output | Implemented | REQ-LEV-8: Each output's profile block says whether the overlay is on. | `test_each_output_says_whether_the_overlay_is_on` (grid) |
+
+### The Environmental Vector
+----
+RID: `req-aydlette-vdr-env`
+
+Status: `Implemented`
+
+The method reads one CVSS vector per finding: the newest CVSS version the enricher holds. Before reachability, LEV and impact read it, CVSS Environmental metrics are set where reconciliation backs them, and only there. Nobody chooses a number: the vector comes from the record, the security requirements (CR, IR, AR) are the needs map's, which the decision table already weighs, and each modified metric comes from evidence. No separate scoring function is applied.
+
+- **Modified Attack Vector Adjacent** when the perimeter is backed: declared internal, Figure 6 consistent, a fresh observation found no path from the internet, and G4, G5 and G7 pass (the same evidence that backs `internet_reachable = false` in the bridge).
+- **Modified Privileges Required Low** when authenticated ingress is backed: a fresh `unauth-ingress` observation found no ingress that takes unauthenticated requests, and none found one; Figure 6 is consistent; no undeclared flow was observed into the component; and G4, G5 and G7 pass. The observation speaks only to requests: an adapter answers only for components reached through requests it can see.
+
+A modified metric only lowers a Base value of Network or None. Every other modified metric, User Interaction among them, stays X: no evidence the observers collect shows that a flaw fires only when a user acts. An unresolved finding takes none, and a finding on several components takes one only when all of them back it. The record's own Environmental metrics describe its publisher's environment and are never read. Each output publishes the Base vector, the environmental one, and each modified metric's basis.
+
+What changes: the FRD-LEV floor and the SSVC overlay's Automatable read the environmental vector, so a backed Privileges Required lifts the floor and the prediction score decides, and a backed Adjacent attack vector is not automatable read from the vector. Reachability is still decided by Figure 5.
+
+#### Implementation
+
+`method/evaluate.py` (`environmental`); `method/reconcile.py` (`perimeter_backed`, `ingress_authenticated`, the `unauth-ingress` observation); `method/vector.py` (`with_environmental`). The AWS adapter's `unauth-ingress` rule is in aydlette-vdr-aws-tap.
+
+#### Acceptance Criteria
+
+| ACID | Title | Status | Description | Notes |
+| --- | --- | :---: | --- | --- |
+| req-aydlette-vdr-env-1 | Backed authenticated ingress lifts the floor | Implemented | A reachable finding exploitable over the network with no privileges and no user interaction, on a component whose authenticated ingress is backed, takes Modified Privileges Required Low; the floor no longer applies and a prediction below θ is NLEV. Without the backing, the floor decides. | `test_backed_authenticated_ingress_sets_mpr_low_and_lifts_the_floor` |
+| req-aydlette-vdr-env-2 | A backed perimeter sets Modified Attack Vector Adjacent | Implemented | A Network vector on a component whose perimeter is backed takes Modified Attack Vector Adjacent; reachability is still Figure 5's; under the overlay the vector no longer reads as automatable. | `test_a_backed_perimeter_sets_mav_adjacent`, `test_mav_adjacent_makes_a_vector_read_flaw_not_automatable_under_the_overlay` |
+| req-aydlette-vdr-env-3 | A modified metric only lowers | Implemented | Privileges Required Low or High, and an Attack Vector other than Network, are left as the record states them. | `test_a_modified_metric_only_lowers_a_network_or_none_base_value` |
+| req-aydlette-vdr-env-4 | Only the method's own Environmental metrics are read | Implemented | With nothing backed the environmental vector is the Base vector. A record's own Environmental, Threat and Supplemental metrics are dropped and never read. | `test_nothing_backed_keeps_the_base_vector`, `test_the_records_own_environmental_metrics_are_never_read`, `test_the_environmental_vector_keeps_only_base_metrics_and_the_methods_own` |
+| req-aydlette-vdr-env-5 | No backing, no modified metric | Implemented | An unresolved finding takes none; a finding on several components takes one only when all of them back it. | `test_an_unresolved_finding_takes_no_modified_metric`, `test_a_finding_on_several_components_needs_the_backing_on_all_of_them` |
+| req-aydlette-vdr-env-6 | Every vector form takes the same metrics | Implemented | Scanner access with no vector, and a CVSS 4.0 vector, take the same modified metrics as a 3.x vector. | `test_scanner_access_takes_the_same_modified_metrics`, `test_a_cvss_4_vector_takes_the_same_modified_metrics` |
+| req-aydlette-vdr-env-7 | What backs authenticated ingress | Implemented | Only a fresh answer that found no unauthenticated ingress, with none that found one, on a consistent component with no gate failing and no undeclared flow in. No answer backs nothing and fails nothing. | `test_ingress_is_authenticated_only_on_a_fresh_answer_with_no_unauthenticated_path`, `test_one_unauthenticated_answer_outweighs_another_that_found_none`, `test_ingress_backing_needs_a_consistent_component_with_no_gate_failing_or_undeclared_flow` |
+| req-aydlette-vdr-env-8 | What backs the perimeter | Implemented | Only a consistent internal component that a fresh observation found no path to. | `test_the_perimeter_is_backed_only_for_a_consistent_internal_component_with_no_path` |
 
 ### Impact (PAIN)
 ----
@@ -268,7 +301,7 @@ RID: `req-aydlette-vdr-pain`
 
 Status: `In Development`
 
-The rating combines the vulnerability's technical impact, the properties its vector touches and the component's needs (from its classification), through a governed combining function (the decision tables by default, or CVSS-Environmental, which runs stackArmor's worked examples), onto the rules' scale. A fully mitigated finding is the scale's lowest level. The vocabulary, needs map and tables are global; a profile's deviations are published.
+The rating combines the vulnerability's technical impact, the properties its vector touches and the component's needs (from its classification), through a governed combining function (the decision tables; a profile that changes them publishes the deviation), onto the rules' scale. A fully mitigated finding is the scale's lowest level. The vocabulary, needs map and tables are global; a profile's deviations are published.
 
 #### From the paper
 
@@ -293,10 +326,8 @@ The rating combines the vulnerability's technical impact, the properties its vec
 | req-aydlette-vdr-pain-5 | No vector and no severity is total | Implemented | REQ-PAI-7: With neither a vector nor a scanner severity, technical impact is total. | `test_no_vector_no_severity_is_total` |
 | req-aydlette-vdr-pain-6 | The severity fallback keeps the fail-safe | Implemented | REQ-PAI-6: The scanner-severity fallback goes through the classification, and a fallback straight to the scale is refused. | `test_severity_fallback_goes_through_the_classification_so_the_fail_safe_holds`, `test_a_fallback_straight_to_the_scale_is_refused` |
 | req-aydlette-vdr-pain-7 | Deviations are published | Implemented | REQ-PAI-4: The global defaults have no deviations; a profile's departures are listed by path. | `test_the_global_defaults_have_no_deviations` |
-| req-aydlette-vdr-pain-8 | CVSS-Environmental is selectable | Implemented | REQ-PAI-1: A profile may select the CVSS-Environmental combining function, and stackArmor's five worked examples produce the memo's N-levels. | `test_cvss_environmental_combining_is_selectable`, `test_the_memos_five_worked_examples`, `test_examples_1_to_3_end_to_end_from_a_declaration` |
-| req-aydlette-vdr-pain-9 | The worked scenario | Implemented | REQ-PAI-1: The paper's HTTP/2 flood scenario rates the docs site N1 and the filing API N4. | `test_scenario_http2_flood_docs_site_n1_filing_api_n4` |
-| req-aydlette-vdr-pain-10 | Where stackArmor's method differs is documented | Implemented | REQ-PAI-4: Under CVSS-Environmental, an unresolved finding is rated at the fail-safe classification, an SSVC total raises the score the vector alone gives, and memo examples 4 and 5 need a published needs-map deviation. | `test_difference_unresolved_findings_and_missing_vectors`, `test_difference_ssvc_total_raises_the_score`, `test_examples_4_and_5_need_requirements_no_classification_produces` |
-| req-aydlette-vdr-pain-11 | Rating changes are appended | Backlog | REQ-PAI-2: Every rating change is appended with its time and reason. | The plugin computes ratings on read and keeps no history. |
+| req-aydlette-vdr-pain-8 | The worked scenario | Implemented | REQ-PAI-1: The paper's HTTP/2 flood scenario rates the docs site N1 and the filing API N4. | `test_scenario_http2_flood_docs_site_n1_filing_api_n4` |
+| req-aydlette-vdr-pain-9 | Rating changes are appended | Backlog | REQ-PAI-2: Every rating change is appended with its time and reason. | The plugin computes ratings on read and keeps no history. |
 
 ### The Clock
 ----
@@ -390,7 +421,7 @@ Every evaluated finding carries G1 (KEV past due), G2 (top-rated, reachable, lik
 
 | ACID | Title | Status | Description | Notes |
 | --- | --- | :---: | --- | --- |
-| req-aydlette-vdr-gates-1 | KEV past due fails G1 even when protected | Implemented | T10: Known-exploited finding recorded as protected by a control, past its catalog due date. Then: G1 fails. | `test_t10_kev_past_catalog_due_date_fails_g1_even_when_protected` |
+| req-aydlette-vdr-gates-1 | KEV past due fails G1 even when protected | Implemented | T10: Known-exploited finding recorded as protected by a control, past its catalog due date. Then: G1 fails. | `test_t10_kev_past_catalog_due_date_fails_g1_even_when_protected`, `test_kev_past_its_due_date_fails_g1_on_the_grid` |
 | req-aydlette-vdr-gates-2 | Top-rated reachable likely exploitable fails G2 | Implemented | REQ-GAT-1:  | `test_g2_top_rated_reachable_likely_exploitable_without_disposition` |
 | req-aydlette-vdr-gates-3 | Past timeframe fails G3 | Implemented | T11: Finding past the timeframe the rules assign to its combination, no disposition. Then: G3 fails. | `test_t11_past_timeframe_without_disposition_fails_g3` |
 | req-aydlette-vdr-gates-4 | Integrity failure blocks publication | Backlog | T17, T20: An output built from one inventory while another is published fails G6; nothing new is published and a status record names the failure. | G6 belongs to the publication pipeline, not this plugin. |
@@ -452,7 +483,7 @@ Every row carries its decision-queue items (kind, subject, opening time, why a p
 
 | ACID | Title | Status | Description | Notes |
 | --- | --- | :---: | --- | --- |
-| req-aydlette-vdr-publication-1 | Queue items and rates are published | In Development | REQ-QUE-1: Each queue item has kind, subject, opened_at, why and options; the summary publishes each kind's rate with its denominator. | Built; the queue fields are asserted in several tests, the rates are not. Needs a summary test. |
+| req-aydlette-vdr-publication-1 | Queue items and rates are published | Implemented | REQ-QUE-1: Each queue item has kind, subject, opened_at, why and options; the summary publishes each kind's rate with its denominator. | Queue fields asserted in several tests; rates in `test_the_summary_counts_gates_the_queue_and_the_withheld_tier` (grid) |
 | req-aydlette-vdr-publication-2 | The public tier withholds open IRV and LEV | In Development | T26: The summary counts open findings that are both IRV and LEV, which the public tier must neither list nor count. | The count is built (`public_tier_withheld`); the tiers themselves are the pipeline's. |
 | req-aydlette-vdr-publication-3 | A missed run is published | Backlog | T73: A scheduled run does not start. Then: A missed run is published for its slot. The history does not show a clean day. | REQ-PUB-5: the pipeline's run history. |
 | req-aydlette-vdr-publication-4 | Assessor text matches its signed record | Backlog | T74: The text of an assessor finding in an output differs from the assessor’s signed record. Then: The build fails. | REQ-ASR-1: the pipeline's assessor input port. |
@@ -551,6 +582,32 @@ Without a prerequisite the method takes the worst case, fails a gate or queues a
 | req-aydlette-vdr-coverage-7 | Advisory feeds apply to advisories only | Implemented |  | `test_advisory_feeds_apply_only_to_advisories_and_checks_need_a_vector`, `test_advisory_ids` |
 | req-aydlette-vdr-coverage-8 | No advisories is not applicable | Implemented |  | `test_no_advisories_is_not_applicable_rather_than_failing` |
 | req-aydlette-vdr-coverage-9 | Gaps are listed worst first | Implemented |  | `test_summary_lists_gaps_worst_first` |
+
+### The Method On A Grid
+----
+RID: `req-aydlette-vdr-grid`
+
+Status: `Implemented`
+
+Every path runs on a grid, not only on pure data, including the advisory path. The CVE grid fixture (`tests/cve_grid.py`) puts findings carrying CVE and GHSA records on a test grid, with declarations, observations, a declared flow and fedramp_20x_vdr's seeded rule rows. Its vulnerability nodes start bare and vuln_mosaic's own `enrich_grid` fills them through the grid, from real CVE List and GitHub advisory records and illustrative KEV and EPSS catalogs, running as the collector actor as vuln_mosaic's collector does. The fixture then runs all four Searches and the fedramp_20x_vdr bridge. vuln_mosaic is not a dependency of this plugin, so the tests skip in this plugin's own CI record and run in a session that composes both; a skip does not satisfy the method's definition of done.
+
+#### Implementation
+
+`tests/cve_grid.py`, `tests/test_grid_cve.py`; data in `tests/fixtures/cve_grid/`.
+
+#### Acceptance Criteria
+
+| ACID | Title | Status | Description | Notes |
+| --- | --- | :---: | --- | --- |
+| req-aydlette-vdr-grid-1 | Enrichment fills bare advisory records | Implemented | CVSS from the record's ADP or CNA container, KEV, EPSS and SSVC land on the bare vulnerability nodes; a fresh catalog's "not listed" is recorded; a GHSA gets no KEV answer. vuln_mosaic reports every node patched and none failed. | `test_enrichment_fills_the_bare_advisory_records` |
+| req-aydlette-vdr-grid-2 | Each factor is decided by the feed that holds it | Implemented | KEV decides LEV first; EPSS is compared with θ; the record's vector is used and named. | `test_each_factor_is_decided_by_the_feed_that_holds_it` |
+| req-aydlette-vdr-grid-3 | What no feed holds takes the worst case | Implemented | No EPSS score, no record and no carrier each take their fail-safe on the grid. | `test_what_no_feed_holds_takes_the_worst_case` |
+| req-aydlette-vdr-grid-4 | The overlay reads Vulnrichment | Implemented | With the SSVC overlay on, technical impact comes from the record's SSVC; KEV still decides first. | `test_the_overlay_reads_vulnrichment_and_is_named` |
+| req-aydlette-vdr-grid-5 | Reconciliation on the grid | Implemented | Declared components reconcile with their observations; an undeclared carrier is not a reconciled component. | `test_reconciliation_on_the_grid` |
+| req-aydlette-vdr-grid-6 | Coverage counts what the feeds hold | Implemented | The advisory and check rows count the enriched records, and missing items are named. | `test_coverage_counts_what_the_feeds_hold` |
+| req-aydlette-vdr-grid-7 | The bridge backs only reconciled unreachability | Implemented | The evaluations import into fedramp_20x_vdr; `backed_factors` reads internet_reachable = false only where reconciliation backs it, and never backs LEV. | `test_the_bridge_backs_only_reconciled_unreachability` |
+| req-aydlette-vdr-grid-8 | With nothing backed the floor decides | Implemented | CVE-2019-9514 (HTTP/2 Reset Flood), enriched by vuln_mosaic onto a reachable component with no authenticated-ingress answer, or with one that found an unauthenticated route, is LEV by the FRD-LEV floor, and its environmental vector is the Base vector. | `test_with_nothing_backed_the_floor_decides_the_reset_flood`, `test_an_unauthenticated_route_backs_nothing` (grid) |
+| req-aydlette-vdr-grid-9 | Authenticated ingress on the grid | Implemented | The same finding with an observation that every route requires authentication takes Modified Privileges Required Low, and its illustrative prediction below θ makes it NLEV; the reconciliation Search shows the backing. | `test_authenticated_ingress_lowers_privileges_and_the_prediction_decides` (grid) |
 
 ## Paper Coverage
 

@@ -15,7 +15,6 @@ import copy
 import hashlib
 import json
 from collections.abc import Iterable
-from decimal import Decimal, InvalidOperation
 from typing import Any
 
 NEED_LEVELS: tuple[str, ...] = ("low", "medium", "high")
@@ -23,7 +22,7 @@ TECHNICAL_IMPACTS: tuple[str, ...] = ("partial", "total")
 EFFECTS: tuple[str, ...] = ("minimal", "narrow", "disruptive", "debilitating")
 SCOPES: tuple[str, ...] = ("single", "multi")
 DATA_FLAGS: tuple[str, ...] = ("public", "internal", "pii", "cui")
-COMBINING: tuple[str, ...] = ("decision_table", "cvss_environmental")
+COMBINING: tuple[str, ...] = ("decision_table",)
 #: The severity fallback sets technical impact only (REQ-PAI-7). A fallback straight to the scale is not offered: it would
 #: skip the classification, and with it the fail-safe for unresolved findings (REQ-PAI-6).
 FALLBACK_MODES: tuple[str, ...] = ("technical_impact",)
@@ -59,9 +58,6 @@ GLOBAL_DEFAULTS: dict[str, Any] = {
     "ssvc_overlay": {"automatable_floor": False, "poc_check": False},
 }
 
-#: The parameters of the CVSS-environmental combining function, when a profile chooses it (a published deviation).
-CVSS_ENVIRONMENTAL_KEYS: tuple[str, ...] = ("impact_weights", "requirement_weights", "isc_cap", "word_thresholds")
-
 
 class ProfileError(ValueError):
     """A governed profile the method refuses to run on (the build fails, REQ-GOV-1)."""
@@ -83,17 +79,6 @@ def digest(profile: dict[str, Any]) -> str:
 def _need(value: Any, where: str) -> None:
     if value not in NEED_LEVELS:
         raise ProfileError(f"{where} must be one of {', '.join(NEED_LEVELS)}, not {value!r}")
-
-
-def _number(value: Any) -> Decimal:
-    """A profile number: an int, a float, or a decimal string. A string keeps a boundary exact, which matters when a
-    worked example sits on it (stackArmor's example 5 has U exactly 0.28)."""
-    if isinstance(value, bool) or not isinstance(value, int | float | str):
-        raise ValueError(f"{value!r} is not a number")
-    try:
-        return Decimal(str(value))
-    except InvalidOperation:
-        raise ValueError(f"{value!r} is not a number") from None
 
 
 def validate(profile: dict[str, Any] | None, rules_levels: Iterable[str]) -> dict[str, Any]:
@@ -160,28 +145,6 @@ def validate(profile: dict[str, Any] | None, rules_levels: Iterable[str]) -> dic
     overlay = p["ssvc_overlay"]
     if bool(overlay.get("automatable_floor")) != bool(overlay.get("poc_check")):
         raise ProfileError("the SSVC overlay applies both of its changes or neither (REQ-LEV-8, T68)")
-
-    if p["combining"] == "cvss_environmental":
-        env = p.get("cvss_environmental")
-        if not isinstance(env, dict) or any(k not in env for k in CVSS_ENVIRONMENTAL_KEYS):
-            raise ProfileError(f"cvss_environmental needs {', '.join(CVSS_ENVIRONMENTAL_KEYS)}")
-        try:
-            iw = {k: _number(v) for k, v in env["impact_weights"].items()}
-            rw = {k: _number(v) for k, v in env["requirement_weights"].items()}
-            t = {k: _number(v) for k, v in env["word_thresholds"].items()}
-            cap = _number(env["isc_cap"])
-        except (ValueError, KeyError, AttributeError) as exc:
-            raise ProfileError(f"cvss_environmental: {exc}") from None
-        if not 0 <= iw["none"] < iw["low"] < iw["high"] <= 1:
-            raise ProfileError("cvss_environmental.impact_weights must satisfy 0 <= none < low < high <= 1")
-        if not 0 < rw["low"] <= rw["medium"] <= rw["high"]:
-            raise ProfileError("cvss_environmental.requirement_weights must satisfy 0 < low <= medium <= high")
-        if iw["high"] * rw["high"] > 1:
-            raise ProfileError("impact_weights.high times requirement_weights.high must not exceed 1")
-        if not 0 < t["minimal_to_narrow"] < t["narrow_to_disruptive"] < t["disruptive_to_debilitating"] <= 1:
-            raise ProfileError("cvss_environmental.word_thresholds must rise within (0, 1]")
-        if not 0 < cap <= 1:
-            raise ProfileError("cvss_environmental.isc_cap must be in (0, 1]")
 
     fresh = p.get("observer_freshness_hours", 24)
     if isinstance(fresh, bool) or not isinstance(fresh, int) or not 1 <= fresh <= 24:

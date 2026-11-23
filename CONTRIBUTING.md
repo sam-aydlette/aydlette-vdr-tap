@@ -51,7 +51,8 @@ hold.
 - [ ] **All 74 Appendix B tests are `Implemented`,** or excluded with a reason in the spec.
 - [ ] **Every path is tested on a grid, not only on pure data.** That includes the advisory path: findings with CVE
       records, enriched with KEV, EPSS and SSVC by vuln_mosaic, run through all four Searches and the fedramp_20x_vdr
-      bridge.
+      bridge. `tests/test_grid_cve.py` does this, and it must pass, not skip: run it in a session with vuln_mosaic
+      installed beside this plugin (see "Running the checks").
 - [ ] **Coverage on a real environment shows only real gaps.** `aydlette-coverage` on a live system reports missing
       tags and services that are off, never gaps the tooling caused.
 - [ ] **Someone other than the author has reviewed it,** against the paper, not against this implementation.
@@ -98,12 +99,23 @@ M=$(find _dev-plugins/aydlette_vdr/tap_plugin -name "*.py" -not -path "*/migrati
 .venv/bin/python manage.py import_plugin_grift aydlette_vdr --bundle searches
 ```
 
+The CVE grid tests (`tests/test_grid_cve.py`) drive vuln_mosaic's real enrichment. vuln_mosaic is not a dependency of
+this plugin, so this plugin's CI record does not install it and those tests skip there. Run them in a session whose
+boot record also installs vuln_mosaic, and check that pytest reports them passed, not skipped:
+
+```bash
+.venv/bin/pytest -q -p no:cacheprovider --strict-markers -rs _dev-plugins/aydlette_vdr/tap_plugin/aydlette_vdr/tests/test_grid_cve.py
+```
+
+The first database-backed run creates the test database, which takes about half an hour with many plugins installed;
+add `--reuse-db` to keep it between runs.
+
 The pure core (`method/`) has no TAP or Django import, so its tests also run outside TAP:
 
 ```bash
 uv run --no-project --python 3.14 --with pytest python -m pytest -q tap_plugin/aydlette_vdr/tests/test_conformance.py \
   tap_plugin/aydlette_vdr/tests/test_reconcile.py tap_plugin/aydlette_vdr/tests/test_coverage.py \
-  tap_plugin/aydlette_vdr/tests/test_stackarmor_examples.py tap_plugin/aydlette_vdr/tests/test_spec.py
+  tap_plugin/aydlette_vdr/tests/test_environmental.py tap_plugin/aydlette_vdr/tests/test_spec.py
 ```
 
 ## Licensing

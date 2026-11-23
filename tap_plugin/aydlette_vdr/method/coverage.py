@@ -41,7 +41,8 @@ from .reconcile import FLOW, OUTSIDE_IN, ComponentState, Flow, Observation
 #: Identifiers of published advisories, which KEV, EPSS, Vulnrichment (SSVC) and NVD (CVSS) key on. Anything else (a
 #: Checkov or ZAP rule, a scanner's own ID) is a check: those feeds say nothing about it.
 ADVISORY = re.compile(
-    r"^(CVE-\d{4}-\d{4,}|GHSA(-[23456789cfghjmpqrvwx]{4}){3}|PYSEC-\d{4}-\d+|GO-\d{4}-\d+|RUSTSEC-\d{4}-\d+|OSV-\d{4}-\d+)$",
+    r"^(CVE-\d{4}-\d{4,}|GHSA(-[23456789cfghjmpqrvwx]{4}){3}|PYSEC-\d{4}-\d+|GO-\d{4}-\d+|RUSTSEC-\d{4}-\d+|OSV-\d{4}-\d+"
+    r"|MAL-\d{4}-\d{1,9})$",  # MAL: OSV's malicious-package ids, as vuln_mosaic 0.7.1 reads them
     re.IGNORECASE,
 )
 IRV_FAIL_SAFE = ("unresolved (fail-safe)", "no exposure_intent (G5)")
