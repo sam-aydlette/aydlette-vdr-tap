@@ -1,6 +1,6 @@
 manifest_version = "0"
 plugin_version = "0.1.0"
-requires_tap = ">=0.3.1"
+requires_tap = ">=0.4.3"
 slug = "aydlette_vdr"
 name = "Aydlette VDR"
 description = "The vulnerability-evidence method for FedRAMP VDR (samaydlette.com/research/vulnerability-evidence.html): declared exposure and classification reconciled with observations (Figure 6), Figure 7 LEV, a three-layer PAIN with governed profiles, dispositions with review dates, the clock and gates G1-G5 and G7."
@@ -44,4 +44,4 @@ aydlette-coverage = "tap_plugin.aydlette_vdr.searches.coverage.aydlette_coverage
 [[boot.records]]
 name = "ci"
 description = "RESERVED NAME (req-boot-bootstrap-ci-record): the stack this plugin's own tests run in: depends_on closure + self, offline, credential-free."
-sha256 = "934ebad5648118d7128f48b0aa2eaa8521e35969bb55b4a002c3a54d010b8a78"
+sha256 = "da8f882ea4a4885de87278f1e33f4253df65ee7fddb15e2411d719ba6d4ff4cc"
