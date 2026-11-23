@@ -1,0 +1,25 @@
+# A thin caller of TAP's reusable per-repository plugin CI. Two independent pins: the `uses:` SHA pins which
+# validation logic runs, and `requires_tap` in the plugin's manifest pins which TAP core it runs against. The record
+# it boots is tap_plugin/aydlette_vdr/boot/ci.boot.json.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tap:
+    # A job-level block replaces the top-level one, so it restates contents: read. The called workflow uploads its
+    # dependency scan as SARIF, which needs security-events: write: upload to this repository's Security tab only.
+    permissions:
+      contents: read
+      security-events: write
+    # TAP v0.4.3.
+    uses: unified-systems-com/tap/.github/workflows/plugin-ci.yml@f8bde62f18c632b4cbcc7671665ec0db70709c2c
+    with:
+      plugin_slug: aydlette_vdr

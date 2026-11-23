@@ -1,0 +1,25 @@
+# A thin caller of TAP's reusable nightly: it runs this plugin against TAP core's main branch, and turns a red night
+# into one issue that the next green night closes.
+name: nightly
+
+on:
+  schedule:
+    - cron: "17 10 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  nightly:
+    # TAP v0.4.3.
+    uses: unified-systems-com/tap/.github/workflows/plugin-nightly.yml@f8bde62f18c632b4cbcc7671665ec0db70709c2c
+    # Required on this job: GitHub checks every job of a called workflow against this grant before starting any.
+    # security-events: write is the SARIF upload; issues: write files and closes the nightly issue.
+    permissions:
+      contents: read
+      security-events: write
+      issues: write
+    with:
+      plugin_slug: aydlette_vdr
+      assignee: sam-aydlette

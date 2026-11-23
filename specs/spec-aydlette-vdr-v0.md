@@ -770,6 +770,5 @@ Every requirement in Appendix A and every test in Appendix B, and where this spe
 ## Future
 
 - Publish the SSVC source and time per finding (T60), the smallest open gap in the overlay.
-- A grid-level CVE fixture: findings with CVE records enriched by vuln_mosaic, run through all four Searches and the bridge, so the advisory paths are tested end to end before a live CVE source exists.
 - Disposition selectors (T49, T50), artifact identity for narrowing (T40), and control change detection (T24, T25).
 - Gate modes and team ownership (T21, T51, T53), once a provider needs them.

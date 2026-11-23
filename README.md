@@ -23,7 +23,7 @@ Timeframes and the maximum overdue period come from `fedramp_20x_vdr`'s seeded r
 (REQ-RUL-1).
 
 The core never asks how an observation was made. An adapter turns a platform's facts into these nodes; for AWS that is
-[aydlette-vdr-aws-tap](../aydlette-vdr-aws-tap), which reads aws_core's nodes.
+[aydlette-vdr-aws-tap](https://github.com/sam-aydlette/aydlette-vdr-aws-tap), which reads aws_core's nodes.
 
 ## Reconciliation (Figure 6)
 
