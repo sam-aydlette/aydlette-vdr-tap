@@ -40,7 +40,12 @@ LEVELS = ("N0", "N1", "N2", "N3", "N4", "N5")
 
 
 def backs_unreachable(row: dict[str, Any], state: ComponentState | None) -> bool:
-    """Whether reconciliation supports `internet_reachable = false` for this row's component."""
+    """Whether reconciliation supports `internet_reachable = false` for this row's component.
+
+    Stricter than the method's own answer on purpose. Inside this method "declared internal" is enough to lower
+    reachability, because its gates are published beside the rating. Another method reading the grid sees only the
+    value and its evidence, not those gates, so a value is handed over as backed only when the observers agree with
+    it."""
     return not row["irv"] and row["irv_basis"] == "declared internal" and perimeter_backed(state)
 
 
@@ -106,6 +111,8 @@ def build_evaluations(
 
         cid = first.get("component_id")
         state = states.get(cid) if cid else None
+        # One evidence node per component, shared by every finding on it: the evidence is about the component's
+        # perimeter, not about any one finding, so a rerun refreshes it once and each finding's citation follows.
         if not irv and all(backs_unreachable(r, state) for r in rs) and state is not None and cid is not None:
             ekey = {"source": SOURCE, "source_key": f"reconcile:{cid}"}
             if cid not in evidence_keys:

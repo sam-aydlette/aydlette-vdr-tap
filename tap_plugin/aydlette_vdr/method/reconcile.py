@@ -98,7 +98,13 @@ class ComponentState:
 
 
 def perimeter_backed(st: ComponentState | None) -> bool:
-    """Reconciliation backs this component's protection at the perimeter (see the module docstring)."""
+    """Reconciliation backs this component's protection at the perimeter (see the module docstring).
+
+    Each condition closes one way an "internal" declaration could be wrong and still lower a rating. The declaration
+    alone is a claim; `observed_path is False` means a fresh observer looked and found nothing; `consistent` means no
+    flow from a public component contradicts it; and the gates mean the declarations agree with each other and no
+    observer is missing or stale. Drop any one and a mistaken declaration, or an observer that stopped running, would
+    lengthen the deadline on a reachable component."""
     return (
         st is not None
         and st.intent == "internal"
@@ -132,6 +138,7 @@ def reconcile(
     freshness_hours: int = MAX_FRESHNESS_HOURS,
 ) -> dict[str, ComponentState]:
     """One state per declared component. `declarations` is keyed by component (node) id."""
+    # A profile may tighten the window, never widen it: an old "no path" says nothing about today's configuration.
     window = timedelta(hours=min(freshness_hours, MAX_FRESHNESS_HOURS))
     opened = now.isoformat()
 
@@ -198,6 +205,9 @@ def reconcile(
             st.cell = "over-declared"
         elif intent == "public-backed" and not observed and not inbound_public:
             st.cell = "over-declared"
+        # Over-declared is queued, not failed: the declaration claims more exposure than was seen, so its findings are
+        # rated as reachable and the error costs effort, not safety. Only the opposite error (undeclared exposure) is a
+        # gate failure.
         if st.cell == "over-declared":
             st.queue.append(
                 {
@@ -234,6 +244,9 @@ def reconcile(
             if o.target != cid or not o.path_found or (o.source, cid) in declared_pairs:
                 continue
             src = declarations.get(o.source) if o.source else None
+            # The same split as above. A public component feeding one declared internal means the declaration
+            # understates exposure, so it fails G4 and the component loses its backing. Any other undeclared flow leaves
+            # the exposure as declared and is a question for a person.
             if _public(src) and intent == "internal":
                 st.cell = "undeclared-exposure"
                 st.g4.append(f"observed flow from public component {o.source} with no declared flow (REQ-IRV-8)")

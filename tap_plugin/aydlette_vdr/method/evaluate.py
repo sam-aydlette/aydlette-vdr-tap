@@ -257,7 +257,13 @@ def environmental(
 def irv(
     finding: Finding, decl: Declaration | None, resolved: bool, in_force: dict[str, Disposition]
 ) -> tuple[bool, str]:
-    """Figure 5's irv(finding), first match deciding."""
+    """Figure 5's irv(finding), first match deciding.
+
+    The order is the safety argument. Every reason to call a finding reachable is tested before the one reason not to:
+    an unresolved finding, an observed contradiction (G4) and a missing intent all return before "declared internal"
+    can lower anything. Reachability then follows the declaration, because it is the governed statement a person owns.
+    A missing or stale observer does not flip it back; it fails G7, which is published beside the rating, and it
+    withholds the backing the environmental vector and the bridge need."""
     if finding.non_machine:
         return False, "non-machine resource (REQ-SRC-3)"
     if not resolved or decl is None:
@@ -327,6 +333,8 @@ def lev(
         if finding.prediction >= theta:
             return True, f"prediction {finding.prediction:g} >= theta {theta:g}"
         return False, f"prediction {finding.prediction:g} < theta {theta:g}"
+    # The only way to "not likely exploitable" is a score below theta or a governed disposition. A configuration check
+    # has no CVE and so no score, which is why every such finding ends here.
     return True, "no prediction score (fail-safe)"
 
 
@@ -356,6 +364,9 @@ def pain(
 
     Returns the level and the values that produced it, so the rating can be checked by hand.
     """
+    # Without a vector nothing says which of confidentiality, integrity and availability the flaw touches, so all
+    # three count and the highest need decides. The need is the component's (what the data requires), the technical
+    # impact is the flaw's (how much of it an attacker gets), and the profile's table combines them.
     affected = v.affected if v is not None else ("c", "i", "a")
     rank = {lv: n for n, lv in enumerate(NEED_LEVELS)}
     need_met = max((need[p] for p in affected), key=rank.__getitem__) if affected else "low"
@@ -482,6 +493,9 @@ def evaluate(
         group = FULLY_MITIGATED
 
     # The clock (REQ-DLN-1, -3): the start carries forward; a verified mitigation that changed the rating starts a new one.
+    # Re-evaluation never restarts the clock: a new declaration or a new observation changes the deadline's length, not
+    # when it began, so re-rating a finding cannot be used to gain time. Only a verified mitigation that changed the
+    # rating starts a new one (below).
     first = finding.first_evaluated_at or finding.first_detected_at
     start, basis = first, "first evaluation" if finding.first_evaluated_at else "detection (evaluated in the same pass)"
     d_on = in_force[MITIGATED].decided_on if MITIGATED in in_force else None
