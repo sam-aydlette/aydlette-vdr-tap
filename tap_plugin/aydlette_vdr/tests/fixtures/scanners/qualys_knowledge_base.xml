@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE KNOWLEDGE_BASE_VULN_LIST_OUTPUT SYSTEM "https://qualysapi.fixture.test/api/2.0/fo/knowledge_base/vuln/knowledge_base_vuln_list_output.dtd">
+<KNOWLEDGE_BASE_VULN_LIST_OUTPUT>
+  <RESPONSE>
+    <DATETIME>2026-11-20T11:00:02Z</DATETIME>
+    <VULN_LIST>
+      <VULN>
+        <QID>376157</QID>
+        <VULN_TYPE>Vulnerability</VULN_TYPE>
+        <SEVERITY_LEVEL>5</SEVERITY_LEVEL>
+        <TITLE><![CDATA[Apache Log4j Remote Code Execution (RCE) Vulnerability (Log4Shell)]]></TITLE>
+        <CATEGORY>Local</CATEGORY>
+        <PATCHABLE>1</PATCHABLE>
+        <CVE_LIST>
+          <CVE>
+            <ID><![CDATA[CVE-2021-44228]]></ID>
+            <URL><![CDATA[https://www.cve.org/CVERecord?id=CVE-2021-44228]]></URL>
+          </CVE>
+        </CVE_LIST>
+        <PCI_FLAG>1</PCI_FLAG>
+      </VULN>
+      <VULN>
+        <QID>730418</QID>
+        <VULN_TYPE>Vulnerability</VULN_TYPE>
+        <SEVERITY_LEVEL>4</SEVERITY_LEVEL>
+        <TITLE><![CDATA[Web Application Framework Multiple Security Vulnerabilities]]></TITLE>
+        <CATEGORY>CGI</CATEGORY>
+        <PATCHABLE>1</PATCHABLE>
+        <CVE_LIST>
+          <CVE>
+            <ID><![CDATA[CVE-2022-0179]]></ID>
+            <URL><![CDATA[https://www.cve.org/CVERecord?id=CVE-2022-0179]]></URL>
+          </CVE>
+        </CVE_LIST>
+        <PCI_FLAG>1</PCI_FLAG>
+      </VULN>
+      <VULN>
+        <QID>198712</QID>
+        <VULN_TYPE>Potential Vulnerability</VULN_TYPE>
+        <SEVERITY_LEVEL>3</SEVERITY_LEVEL>
+        <TITLE><![CDATA[Linux Kernel Branch History Injection Vulnerability]]></TITLE>
+        <CATEGORY>Ubuntu</CATEGORY>
+        <PATCHABLE>1</PATCHABLE>
+        <CVE_LIST>
+          <CVE>
+            <ID><![CDATA[CVE-2022-0001]]></ID>
+            <URL><![CDATA[https://www.cve.org/CVERecord?id=CVE-2022-0001]]></URL>
+          </CVE>
+        </CVE_LIST>
+        <PCI_FLAG>0</PCI_FLAG>
+      </VULN>
+      <VULN>
+        <QID>87412</QID>
+        <VULN_TYPE>Vulnerability</VULN_TYPE>
+        <SEVERITY_LEVEL>3</SEVERITY_LEVEL>
+        <TITLE><![CDATA[HTTP/2 Reset Flood Denial of Service Vulnerability]]></TITLE>
+        <CATEGORY>Web server</CATEGORY>
+        <PATCHABLE>1</PATCHABLE>
+        <CVE_LIST>
+          <CVE>
+            <ID><![CDATA[CVE-2019-9514]]></ID>
+            <URL><![CDATA[https://www.cve.org/CVERecord?id=CVE-2019-9514]]></URL>
+          </CVE>
+        </CVE_LIST>
+        <PCI_FLAG>1</PCI_FLAG>
+      </VULN>
+      <VULN>
+        <QID>45038</QID>
+        <VULN_TYPE>Information Gathered</VULN_TYPE>
+        <SEVERITY_LEVEL>1</SEVERITY_LEVEL>
+        <TITLE><![CDATA[Host Scan Time]]></TITLE>
+        <CATEGORY>Information gathering</CATEGORY>
+        <PATCHABLE>0</PATCHABLE>
+        <PCI_FLAG>0</PCI_FLAG>
+      </VULN>
+    </VULN_LIST>
+  </RESPONSE>
+</KNOWLEDGE_BASE_VULN_LIST_OUTPUT>
